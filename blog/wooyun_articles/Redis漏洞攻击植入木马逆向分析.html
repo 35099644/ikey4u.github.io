@@ -1,0 +1,233 @@
+<html>
+<head>
+     <title>Redis漏洞攻击植入木马逆向分析 - 阿里云安全</title>
+	 <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+</head>
+<body>
+<h1>URL:<a href="http://drops.wooyun.org/papers/10546">http://drops.wooyun.org/papers/10546</a></h1>
+
+      <p>
+        <p>作者：梦特（阿里云云盾安全攻防对抗团队）</p>
+
+<h1>0x00 背景</h1>
+
+<hr />
+
+<p>2015年11月10日，阿里云安全团队捕获到黑客大规模利用Redis漏洞的行为，获取机器root权限，并植入木马进行控制，异地登录来自IP：104.219.xxx.xxx（异地登录会有报警）。由于该漏洞危害严重，因此阿里云安全团队在2015年11月11日，短信电话联系用户修复Redis高危漏洞，2015年11月14日，云盾系统检测到部分受该漏洞影响沦为肉鸡的机器进行DDOS攻击，发现后云盾系统已自动通知用户。</p>
+
+<h1>0x01 木马控制协议逆向分析</h1>
+
+<hr />
+
+<p>分析发现木马作者，有2个控制协议未完成。</p>
+
+<ul>
+<li>Connect协议有处理函数，但没有功能，函数地址为0x8048545。</li>
+</ul>
+
+<!--more-->
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/d6d110902f645faa28f28dacd018228e.jpg" alt="" /></p>
+
+<ul>
+<li><p>sniffsniff协议没有对应的处理函数，作者未实现该功能。</p>
+
+<p>完全逆向分析后得到控制协议如下表：</p></li>
+</ul>
+
+<table border="1">
+  <tr>
+    <td>
+      协议
+    </td>
+    
+    <td>
+      协议格式
+    </td>
+    
+    <td>
+      分析描述
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      kill
+    </td>
+    
+    <td>
+      kill
+    </td>
+    
+    <td>
+      结束自身进程
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      dlexec
+    </td>
+    
+    <td>
+      dlexec IP filepath port
+    </td>
+    
+    <td>
+      在指定IP下载文件并执行
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      qweebotkiller
+    </td>
+    
+    <td>
+      qweebotkiller
+    </td>
+    
+    <td>
+      遍历进程PID为0到65535，查找对应文件，若匹配特征EXPORT %s:%s:%s，则删除文件
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      system
+    </td>
+    
+    <td>
+      system cmdline
+    </td>
+    
+    <td>
+      调用系统的/bin/sh执行shell脚本
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      connect
+    </td>
+    
+    <td>
+      connect ips arg2 arg3 arg4
+    </td>
+    
+    <td>
+      有处理函数，但作者把connect的功能给阉割了，并没有去实现connect协议的功能，因此我们只分析出协议1个参数的意议，另外3个参数不知道意义。
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      icmp
+    </td>
+    
+    <td>
+      icmp IPs attacktime PacketLen
+    </td>
+    
+    <td>
+      发动icmp协议攻击
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      tcp
+    </td>
+    
+    <td>
+      tcp ips port attacktime flags packetlen
+    </td>
+    
+    <td>
+      发动TCP的(fin,syn,rst,psh,ack,urg)DDOS攻击，攻击时间为秒。
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      udp
+    </td>
+    
+    <td>
+      udp ips port attacktime packetlen
+    </td>
+    
+    <td>
+      发动UDP攻击。
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      sniffsniff
+    </td>
+    
+    <td>
+      sniffsniff
+    </td>
+    
+    <td>
+      这个协议木马并没有实现功能。
+    </td>
+  </tr>
+</table>
+
+<ul>
+<li><p>协议完成逆向后，我们用Python写了一个控制端，并实现全部协议控制木马，如下图：</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/f263f48348edf10d62540b7a910f4aa1.jpg" alt="" /></p></li>
+</ul>
+
+<h1>0x02 木马概述</h1>
+
+<hr />
+
+<p>从逆向得到的协议分析可以发现，该木马的功能主要包括：</p>
+
+<ul>
+<li>发动DDoS攻击（ICMP、UDP、TCP）</li>
+<li>远程执行命令</li>
+<li>远程下载文件执行</li>
+<li>清除其他后门文件</li>
+</ul>
+
+<p>文件MD5：9101E2250ACFA8A53066C5FCB06F9848</p>
+
+<h2>进程操作</h2>
+
+<ul>
+<li><p>木马启动，木马接受1个参数，参数为要kill的进程PID。函数地址为0x8049C77.</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/4eb91c663d3f6fcf9bb74c377d90556a.jpg" alt="" /></p></li>
+<li><p>木马会启动一个孙子进程执行木马功能，然后当前进程退出。</p></li>
+</ul>
+
+<h2>文件操作</h2>
+
+<ul>
+<li><p>暴力关闭文件，关闭0到0xFFFF的文件，调用系统调用sys_close()，函数地址为0x8049C77。</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/336ad63fcf5dbb54e87455d5816f10d9.jpg" alt="" /></p></li>
+<li><p>自我删除，调用系统调用<code>sys_readlink()</code>读取<code>/proc/self/exe</code>获取文件路径，<code>sys_unlink()</code>进行删除，处理函数地址为0x80494F3。</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/4896dbd72c593f2eb2eb78893b4906fb.jpg" alt="" /></p></li>
+</ul>
+
+<h2>网络操作</h2>
+
+<ul>
+<li><p>连接8.8.8.8的53端口，探测网络是否连接到Internet，处理函数地址为0x8049B90。</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/eb1795e37c29dbb2686192460e17f163.jpg" alt="" /></p></li>
+<li><p>连接木马控制端37.xxx.xxx.x的53端口，处理函数地址为0x8049C77。</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/3b795e97c14c2859f0695e7b0266142e.jpg" alt="" /></p></li>
+</ul>      </p>
+    
+</body>
+</html>

@@ -1,0 +1,267 @@
+<html>
+<head>
+     <title>移花接木大法：新型“白利用”华晨远控木马分析 - 360安全卫士</title>
+	 <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+</head>
+<body>
+<h1>URL:<a href="http://drops.wooyun.org/papers/6262">http://drops.wooyun.org/papers/6262</a></h1>
+
+      <p>
+        <h1>0x00 前言</h1>
+
+<hr />
+
+<p>“白利用”是木马对抗主动防御类软件的一种常用手法。国内较早一批“白利用”木马是通过系统文件rundll32.exe启动一个木马dll文件，之后又发展出劫持合法软件的dll组件来加载木马dll的攻击方式。</p>
+
+<p>随着安全软件对“白利用”的防御机制日益完善，木马也在花样翻新。近期，360QVM引擎团队发现“华晨同步专家”远控木马家族采用了比较另类的“白利用”技术：该木马利用白文件加载dll文件后，再次启动白文件并卸载白进程内存空间，然后重新填充病毒代码执行。</p>
+
+<p>这种“移花接木”的手法，使得病毒代码均通过白进程主模块执行，能够绕过多数安全软件的主动防御规则，具有较强的存活能力。以下是对此木马详细的技术分析：</p>
+
+<!--more-->
+
+<h1>0x01 木马分析</h1>
+
+<hr />
+
+<p>该木马伪装成“美女图片”通过社交软件、电子邮件等方式传播，一旦中招，电脑将被黑客发送指令执行摄像头监控、屏幕监控等远程控制行为。目前已知该木马主要变种达到22个。</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/d525c223ce62caaed93ec5fee3427900.jpg" alt="enter image description here" /></p>
+
+<p>图：“华晨同步专家”远控木马及变种</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/23563b9bc5048860dc4c6ee3316dd071.jpg" alt="enter image description here" /></p>
+
+<p>图：木马执行过程</p>
+
+<p>“华晨同步专家”木马文件：</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/c2e8f16abcd3e4f0bf966785a54e154e.jpg" alt="enter image description here" /></p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/d1fe503409ad92a90a14b19fc7147d11.jpg" alt="enter image description here" /></p>
+
+<p>美女图片.exe：运行后会释放update.exe、ETComm.dll、wc.dat这三个文件，并运行update.exe。这种“三合一”的打包方式相比压缩包更利于木马传播。</p>
+
+<ol>
+<li>update.exe：盛大网络的ET语音启动程序</li>
+<li>ETComm.dll：用于劫持盛大程序的木马dll文件</li>
+<li>wc.dat：zlib压缩加密的远程控制木马</li>
+</ol>
+
+<p>我们首先从ETComm.dll入手分析：</p>
+
+<p><strong><em>ETComm.dll分析过程</em></strong></p>
+
+<p>DllMain中首先获取模块完整路径</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/3ccab06d13d531fded462f87a634fc7e.jpg" alt="enter image description here" /></p>
+
+<p>比较自身完整路径是否为<code>C:\$WinBackUP.H1502\BinBackup\Images\update.exe</code> 如果不在<code>C:\$WinBackUP.H1502\BinBackup\Images</code>目录下则将<code>ETComm.dll</code>、<code>wc.dat</code>、<code>update.exe</code>拷贝过去，接下来直接进入<code>100016A0</code></p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/91a3f23f7ee1c6abad436af1c1020b76.jpg" alt="enter image description here" /></p>
+
+<p>100016A0进来以后首先访问C:\$WinBackUP.H1502\BinBackup\Images\wc.dat</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/0910ca5dfba04c1b737dcf88ece81306.jpg" alt="enter image description here" /></p>
+
+<p>申请一段内存后将wc.dat的内容读进去</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/b2c32d02507c4e99787b459f2d2c6a52.jpg" alt="enter image description here" /></p>
+
+<p>将读出来的文件内容的前四位与0x36异或，得出0x14E00</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/be1a6d5cc274bdac84db67f4495037ef.jpg" alt="enter image description here" /></p>
+
+<p>将解密出来的0x14e00给到一个变量</p>
+
+<p>紧接着就申请出来一块0x14E00大小的内存</p>
+
+<p>之后将这些数据作为参数传递到Zlib的解压函数中</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/f97545c2f558f4da7f21aafb51f096c0.jpg" alt="enter image description here" /></p>
+
+<p>解出来的数据如下</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/b9c4d08c2db7b5aa6f5db6c2e1ffae99.jpg" alt="enter image description here" /></p>
+
+<p>由此我们可以得出wc.dat的结构，第一个DWORD存放的是UnpackFileSize，之后的数据存放的是压缩后的文件数据，此时是最好的dump时机。</p>
+
+<p>Dump出来的文件：</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/ab0333d3fc3b59f74b483cd9c211ec9e.jpg" alt="enter image description here" /></p>
+
+<p><strong><em>接下来是为内存运行exe做准备了</em></strong></p>
+
+<p>alignPEToMem函数主要作用为加载PE到内存，该函数主要内容为对其exe节数据进行初始化操作。AttachPE主要作用为创建外壳进程（盛大网络ET语音启动程序），并替换进程数据然后执行真正的病毒代码</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/86bf7ddb91561ac640bf90527a90ccbc.jpg" alt="enter image description here" /></p>
+
+<p>我们重点来看下AttachPE函数的行为：</p>
+
+<p>首先挂起模式再次运行<code>C:\$WinBackUP.H1502\BinBackup\Images\update.exe</code></p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/9b2a1b3c60ed1f851aa1797eabb5df20.jpg" alt="enter image description here" /></p>
+
+<p>调用GetThreadContext获取信息目标进程的线程句柄</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/c32f30d7e72f45867a62e325cfddaaef.jpg" alt="enter image description here" /></p>
+
+<p>得到的信息存放在结构体<code>lpContext</code>中，接着读取了目标进程的<code>lpContext</code>结构体中<code>Ebx+8</code>的数据。</p>
+
+<p><code>[lpContext.Ebx+8]</code>处存的是外壳进程的加载基址，该目标进程的基址为<code>0x00400000</code></p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/76b8b8308fa094a5e9f7c2dd9c2ff998.jpg" alt="enter image description here" /></p>
+
+<p>动态获取<code>ntdll</code>的<code>ZwUnmapViewOfSection</code>并调用，卸载目标进程原外壳内存数据</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/0fb5a3d416508bca0e2d78520bdb1a36.jpg" alt="enter image description here" /></p>
+
+<p>重新在目标傀儡进程中申请傀儡代码用到的内存，<code>0x00400000</code>大小为<code>2C000</code></p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/63e157377907be710b6ff9ed1fbcb199.jpg" alt="enter image description here" /></p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/a614b16868f6133d3502f7456dd2b29c.jpg" alt="enter image description here" /></p>
+
+<p>内存申请成功后在傀儡进程的<code>Context.ebx+8</code>中写入新的基址（因为两个文件基址都为<code>0x400000</code>，所以这一步并没有什么用，但是如果对于两个基址不一样的文件这一步就非常必要了）</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/981f35f65d671662c0cf7642c7f4b7b4.jpg" alt="enter image description here" /></p>
+
+<p>然后在新申请的内存中写入已经展开了所有节数据的病毒代码，大小为0x2C000</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/ac53c45bb39ec2e7f0a80bdb85775750.jpg" alt="enter image description here" /></p>
+
+<p>重置运行环境中的入口地址，新的OEP为基址+0x0002A820</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/0d4bf0dcd88ed6c55e2d96ea9e443c1f.jpg" alt="enter image description here" /></p>
+
+<p>更新傀儡进程运行环境后恢复傀儡进程运行</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/795579e420b47f0e729c8113b306aeb2.jpg" alt="enter image description here" /></p>
+
+<p>至此ETComm.dll的任务已经完成，直接退出了进程</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/8865c314879603f95f7e795958075eaa.jpg" alt="enter image description here" /></p>
+
+<p><strong><em>接下来我们来分析被偷梁换柱的update.exe进程</em></strong></p>
+
+<p>从入口点我们可以看出是UPX加壳</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/ace8e6ae232429c667d5d45da099b9f8.jpg" alt="enter image description here" /></p>
+
+<p>直接ESP定律到程序OEP，入口点代码可以看出是VC6.0所编译</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/12240f513e5406807d11be737442d2a1.jpg" alt="enter image description here" /></p>
+
+<p>来到Main函数我们可以看到先是调用了一些sleep(0)</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/dd47e240605904997080cb9be150d0f0.jpg" alt="enter image description here" /></p>
+
+<p>后面有一些字符串单字节赋值，我们可以看出他拼出来的字符串是Kernel32.dll和GetMoudleFileNameA，分别给到了变量LibFileName和ProcName</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/d4ff169cc212d7eb9a90f76f0f60de09.jpg" alt="enter image description here" /></p>
+
+<p>动态获取GetMoudleFileNameA</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/c2805c14a2a164d8d52fd981d0bb0024.jpg" alt="enter image description here" /></p>
+
+<p>通过GetMoudleFileNameA获取到文件所在路径后，将该路径写入注册表作为启动项，启动项名称为“Realtek高清晰音频管理器”</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/cd2bd5db982153f081ba9b4e70e0ef6e.jpg" alt="enter image description here" /></p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/7c9103ad9ef96f6c592fdf6bd442702f.jpg" alt="enter image description here" /></p>
+
+<p>获取资源中的名为“dll”的资源</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/dc02fa44777d47aa41d2b95a843db8cc.jpg" alt="enter image description here" /></p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/1225659bf0241d72cfe9a81545cf4a37.jpg" alt="enter image description here" /></p>
+
+<p>解密算法为</p>
+
+<pre><code>xor 0xF1
+add 0xF1
+</code></pre>
+
+<p>中间有很多sleep(0)做干扰</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/26120eac139f3e6e580bb66551d71fa5.jpg" alt="enter image description here" /></p>
+
+<p>解出来的文件</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/06d1b4eb09f880afd132f7236ac59fce.jpg" alt="enter image description here" /></p>
+
+<p>Dump出来是dll简单观察发现是华晨远控（Gh0st修改）</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/7a8119d7db745e4df3c7c51b6407ad75.jpg" alt="enter image description here" /></p>
+
+<p>继续往下就是内存加载dll。抛弃系统的LoadLibrary和GetProcAddress来自己实现则会使dll不用落地，其目的是躲避安全软件的云查杀。</p>
+
+<p>LoadLibrary的实现过程如下：</p>
+
+<p>申请内存，写入PE头数据</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/9707ad94d1d596e0d6a5aac65e8a1fb4.jpg" alt="enter image description here" /></p>
+
+<p>循环拷贝各个节数据</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/9a50b6c4a6454d1b52c3628cb84a3237.jpg" alt="enter image description here" /></p>
+
+<p>处理重定位</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/17b95b20cb2b67e82aed3e6d465b5c8b.jpg" alt="enter image description here" /></p>
+
+<p>读取dll的引入表部分，加载引入表部分需要的，并填充需要的函数入口的真实地址</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/11c048845114a08a3558bba35c05f245.jpg" alt="enter image description here" /></p>
+
+<p>dll</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/b4fcc4a45fa7e689f765b06b99398a57.jpg" alt="enter image description here" /></p>
+
+<p>修改各个节内存属性，单独设置其对应内存页的属性</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/f9524ea60135120dbc0b3d42bad05dc5.jpg" alt="enter image description here" /></p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/46d8247ce5afd8f3b366a59645d82635.jpg" alt="enter image description here" /></p>
+
+<p>执行DllMain函数</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/dd05272afa0436d1bc8bd75e659a6e1f.jpg" alt="enter image description here" /></p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/d32d14ca8bda1e50cb5d64a42a7974f3.jpg" alt="enter image description here" /></p>
+
+<p>GetProcAddress实现过程：</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/51af2e48cf56af74ab3ee651b182beb6.jpg" alt="enter image description here" /></p>
+
+<p>调用自写GetProcAddress获取“Fi”导出函数并调用</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/c16faa9290bc2f3280a2cbd81b7175c0.jpg" alt="enter image description here" /></p>
+
+<p>Fi函数负责将整个远控执行起来了。</p>
+
+<p>以下是远控基本信息：</p>
+
+<pre><code>远控上线地址：dddd.ndiii.com
+端口：2012
+分组名称：Default
+远控官网：http://www.jinjingltsh.com/
+</code></pre>
+
+<p>“华晨同步专家”官网号称“拥有国家政府机关认证，与众多安全厂商均有合作”，实际上完全是其捏造的。</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/55225e54e62a664278ff0568509267e3.jpg" alt="enter image description here" /></p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/f3c1d94c35399d8d0a2beff7aa2bfbd0.jpg" alt="enter image description here" /></p>
+
+<h1>0x02 总结</h1>
+
+<hr />
+
+<p>通过以上分析我们看出，“华晨同步专家”远控木马的新颖之处，在于利用白进程内存运行exe，内存运行dll，真正的病毒文件并不落地，仅存活在内存当中，具有较强的免杀能力。</p>
+
+<p>根据VirusTotal对此木马较新变种样本的扫描结果，57款杀毒软件中有17款可以将其检出，检出率约为30%：</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/602886ec3a57e604472dd1711eade6dc.jpg" alt="enter image description here" /></p>      </p>
+    
+</body>
+</html>

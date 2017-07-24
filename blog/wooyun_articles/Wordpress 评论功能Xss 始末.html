@@ -1,0 +1,176 @@
+<html>
+<head>
+     <title>Wordpress 评论功能Xss 始末 - Stefanie</title>
+	 <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+</head>
+<body>
+<h1>URL:<a href="http://drops.wooyun.org/papers/6024">http://drops.wooyun.org/papers/6024</a></h1>
+
+      <p>
+        <p>近期Wordpress自身程序评论功能的Xss在微博上沸沸扬扬，而其中的修复过程也可谓一波三折，接下来由我为大家一一讲述。</p>
+
+<h1>WordPress &lt;4.1.2 xss</h1>
+
+<hr />
+
+<p>该问题来自于特殊字符截断，mysql官网描述“The character set named utf8 uses a maximum of three bytes per character and contains only BMP characters”，mysql在使用utf8编码时，单个字符大小上限为3字节，当出现超过3个字节的utf8字符时，则会出现由于数据库不识别字符而产生截断效果。示例如下，使用特殊字符：</p>
+
+<p><!--more--></p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/ee3486b5246a2ed31c02aaeaf5bb3349.jpg" alt="enter image description here" /></p>
+
+<pre><code>#!sql
+UPDATE `wp_comments` SET `comment_content` = 'stefanie[特殊字符]555555 ' WHERE `wp_comments`.`comment_ID` =12;
+</code></pre>
+
+<p>在数据库中插入的结果为stefanie，特殊字符及后面的内容并未插入数据库。</p>
+
+<p>UTF-8编码在对于不同的字符区域，编码所占用的字节数各不相同。</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/4c492d9ac43099461f4b2076c0289bfc.jpg" alt="enter image description here" /></p>
+
+<p>mysql utf-8编码对于占用四个字节的字符无法识别，使用上图范围内的编码均可达到目的，如</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/f02763ae2b02ef88baef31bf87bb94ba.jpg" alt="enter image description here" /> <img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/a88d0ab73cc91520126a8a6a7cfcf318.jpg" alt="enter image description here" /> <img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/da7686db768731158b3bbb443731cc61.jpg" alt="enter image description here" /></p>
+
+<p>当mysql的编码为utf-8mb4或者latin1时，则可以对此类字符进行识别，另外，当mysql开启strict mode时候，会更加严格地处理，确保在数据有效存储之前进行阻止，也就不会产生该问题。</p>
+
+<p>关于漏洞利用，Wordpress只允许评论中出现白名单内的标签和对应的属性，而且要保证标签的完整性，比如尖括号的闭合。Poc如下：</p>
+
+<pre><code>#!html
+&lt;abbr title="123 onmouseover=alert(1) 特殊字符"&gt;
+</code></pre>
+
+<p>可以看出，onmouseover是在双引号内作为title属性的值出现的，在插入数据库时由于特殊字符产生截断，右侧的引号不会插入，在输出时，左侧引号会被转义，因而可使得onmouseover成功解析。 相关链接：</p>
+
+<p>(1] http://xteam.baidu.com/?p=177 (2]https://cedricvb.be/post/wordpress-stored-xss-vulnerability-4-1-2/ (3]https://dev.mysql.com/doc/refman/5.5/en/charset-unicode-utf8mb4.html</p>
+
+<h1>WordPress &lt;=4.2 xss</h1>
+
+<hr />
+
+<p>mysql type＝TEXT时，TEXT的最大长度为64kb，当发生数据库的插入操作时，则会将大于64KB的部分抛弃，此时也造成了一种截断，而wordpress保存评论的字段的type正是TEXT。</p>
+
+<p>该漏洞于上一漏洞同理，只是截断的方式有所不同，poc如下：</p>
+
+<pre><code>#!html
+&lt;abbr title="123 onmouseover=alert(1) 此处增加无用字符至64KB "&gt;
+</code></pre>
+
+<p>截断效果如下图：</p></p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/4d37fee18b94d68e91bc6e72e2d5b89f.jpg" alt="enter image description here" /></p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/6be887614c53e810e71f87fc19ce7561.jpg" alt="enter image description here" /></p>
+
+<p>该poc仅限IE使用，而Klikki Oy团队给出了兼容多种浏览器的POC，chrome，IE，firefox测试成功。</p>
+
+<pre><code>#!html
+stefanie&lt;a title='x onmouseover=alert(unescape(/hello%20world/.source))
+style=position:absolute;left:0;top:0;width:5000px;height:5000px  此处用特殊字符或者长度截断均可'&gt;&lt;/a&gt;
+</code></pre>
+
+<p>相关链接： (1] http://xteam.baidu.com/?p=177 (2] https://speakerdeck.com/mathiasbynens/hacking-with-unicode</p>
+
+<h1>WordPress &lt;=4.2.1 xss</h1>
+
+<hr />
+
+<p>4.2.1版本主要针对长度截断进行了修复，在wp-includes\wp-db.php get&#95;col&#95;length函数中增加了数据库每种类型字段的长度限制，并和传入数据长度做了比较。</p>
+
+<pre><code>#!php
+protected function process_field_lengths( $data, $table ) {
+foreach ( $data as $field =&gt; $value ) {
+    if ( '%d' === $value['format'] || '%f' === $value['format'] ) {
+            // We can skip this field if we know it isn't a string.
+            // This checks %d/%f versus ! %s because it's sprintf() could take more.
+            $value['length'] = false;
+        } else {
+            $value['length'] = $this-&gt;get_col_length( $table, $field );
+            if ( is_wp_error( $value['length'] ) ) {
+                return false;
+            }
+        }
+        if ( false !== $value['length'] &amp;&amp; mb_strlen( $value['value'] ) &gt; $value['length'] ) {
+            return false;
+        }
+        $data[ $field ] = $value;
+    }
+    return $data;
+}
+</code></pre>
+
+<p>$value['length']来自于get&#95;col&#95;length，text类型长度上限为65535字节，mb&#95;strlen( $value['value'] )是mb&#95;strlen函数来统计字符个数的结果，两个值的计量单位不同，一个是字节数，一个是字符的个数。</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/d33dbc36a775f9e1f855784fa836d2ac.jpg" alt="enter image description here" /></p>
+
+<p>在函数“mb_strlen”中，一个多字节字符统计个数为1。在不同的编码中，一个字符的大小可以为多个字节（多字节字符），所以我们可以构造一个字符串，让字符的个数小于65535而字符串的字节数大于65535字节，从而满足如下条件：</p>
+
+<pre><code>#!sql
+if ( false !== $value['length'] &amp;&amp; mb_strlen( $value['value'] ) &gt; $value['length'] ) {
+                return false;}
+</code></pre>
+
+<p>当php向数据库中插入数据时，由于字节数超过了text类型的长度上线65535字节，所以字符串会被截断，导致了之前的xss可以重新被利用。 相关链接：</p>
+
+<p>(1] http://xteam.baidu.com/?p=198 (2] http://php.net/manual/zh/function.mb-strlen.php</p>
+
+<h1>WordPress 4.2.2 中总体修复情况</h1>
+
+<hr />
+
+<p>在4.2.2版本中引入了两个变量：</p>
+
+<p>$truncate&#95;by&#95;byte&#95;length ： 是否进行字节长度验证 $needs&#95;validation ： 是否进行多字节字符合规性验证以及长度验证 wp422/wp-includes/wp-db.php 2626行</p>
+
+<pre><code>#!sql
+if ( $truncate_by_byte_length ) {
+    mbstring_binary_safe_encoding();
+    if ( false !== $length &amp;&amp; strlen( $value['value'] ) &gt; $length ) {
+        $value['value'] = substr( $value['value'], 0, $length );
+    }
+    reset_mbstring_encoding();
+    if ( ! $needs_validation ) {
+        continue;
+    }
+}
+</code></pre>
+
+<p>该处解决了4.2.1中用mb_strlen来测量实际长度和规定长度上线之间的比较造成的问题，改用了strlen来测量长度，并对超长部分进行切割，因而拦截了4.2.1补丁bypass造成的xss。</p>
+
+<pre><code>#!sql
+$regex = '/
+    (
+        (?: [\x00-\x7F]                  # single-byte sequences   0xxxxxxx
+        |   [\xC2-\xDF][\x80-\xBF]       # double-byte sequences   110xxxxx 10xxxxxx
+        |   \xE0[\xA0-\xBF][\x80-\xBF]   # triple-byte sequences   1110xxxx 10xxxxxx * 2
+        |   [\xE1-\xEC][\x80-\xBF]{2}
+        |   \xED[\x80-\x9F][\x80-\xBF]
+        |   [\xEE-\xEF][\x80-\xBF]{2}';
+if ( 'utf8mb4' === $charset ) {
+    $regex .= '
+        |    \xF0[\x90-\xBF][\x80-\xBF]{2} # four-byte sequences   11110xxx 10xxxxxx * 3
+        |    [\xF1-\xF3][\x80-\xBF]{3}
+        |    \xF4[\x80-\x8F][\x80-\xBF]{2}
+    ';
+}
+$regex .= '){1,40}                          # ...one or more times
+    )
+    | .                                  # anything else
+    /x';
+$value['value'] = preg_replace( $regex, '$1', $value['value'] );
+if ( false !== $length &amp;&amp; mb_strlen( $value['value'], 'UTF-8' ) &gt; $length ) {
+    $value['value'] = mb_substr( $value['value'], 0, $length, 'UTF-8' );
+}
+continue;
+}
+</code></pre>
+
+<p>可以看出，对于utf8编码时，仅仅会取范围内的小于等于3字节UTF8字符，取出之后，会按照当前多字节字符的编码长度再次确认。此处是针对小于4.2版本用四字节utf8字符插入数据库截断以及其他特殊字符截断而修补的。 相关链接：</p>
+
+<p>(1] https://wordpress.org/news/2015/05/wordpress-4-2-2/</p>
+
+<p>致谢：感谢evil_xi4oyu的每一次悉心指点和yaseng的帮助~</p>      </p>
+    
+</body>
+</html>

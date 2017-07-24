@@ -1,0 +1,177 @@
+<html>
+<head>
+     <title>“大灰狼”远控木马分析及幕后真凶调查 - 360安全卫士</title>
+	 <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+</head>
+<body>
+<h1>URL:<a href="http://drops.wooyun.org/papers/10294">http://drops.wooyun.org/papers/10294</a></h1>
+
+      <p>
+        <p>9月初360安全团队披露<a href="http://www.hackdig.com/09/hack-26124.htm">bt天堂网站挂马事件</a>，该网站被利用IE神洞CVE-2014-6332挂马，如果用户没有打补丁或开启安全软件防护，电脑会自动下载执行大灰狼远控木马程序。</p>
+
+<p>鉴于bt天堂电影下载网站访问量巨大，此次挂马事件受害者甚众，360QVM引擎团队专门针对该木马进行严密监控，并对其幕后真凶进行了深入调查。</p>
+
+<h1>0x00 “大灰狼”的伪装</h1>
+
+<hr />
+
+<p>以下是10月30日一天内大灰狼远控的木马样本截图，可以看到该木马变种数量不少、伪装形态更是花样繁多。</p>
+
+<!--more-->
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/d211461f9db7b63f1e939f30580bed3b.jpg" alt="" /></p>
+
+<p>大灰狼使用了不少知名软件图标，在此提醒网民在点击运行可疑来源的文件之前，最好查看属性通过数字签名判断文件真伪，而不要被文件名和图标迷惑：</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/c470e49db1c13671b1837e4bf549f21e.jpg" alt="" /></p>
+
+<h1>0x01 木马程序分析</h1>
+
+<hr />
+
+<p>由于木马样本数量比较多，我们不一一列举，以下提供几例来说明：</p>
+
+<p>本文用到的恶意代码md5:</p>
+
+<pre><code>0b1b9590ebde0aeddefadf2af8edf787
+0ea5d0d826854cdbf955da3311ed6934
+19c343f667a9b958f5c31c7112b2dd1b
+d16e6ef8f110196e3789cce1b3074663
+</code></pre>
+
+<h2>1、动态调用系统函数，躲避杀毒查杀</h2>
+
+<p>大灰狼远控由于长期的被杀毒追杀，所以大量的使用动态调用系统api，来躲避查杀，所有的文件相关操作都采用了动态调用的方式。</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/628d2bab8904f089e0f470e8b27d4222.jpg" alt="" /></p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/68f39fa42fcc558ef39967f1c9071142.jpg" alt="" /></p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/877c486eb135d8d8f5a9a3d4a85501b3.jpg" alt="" /></p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/7908ea9d008a84434e6396c23de2e91c.jpg" alt="" /></p>
+
+<p>几乎所有的样本都需要动态的解码才能获取到相关的函数调用。</p>
+
+<p>在IDA里，我们可以看到木马使用的手段：</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/01fb343c9e0ac7e261e7cc51573ec9c8.jpg" alt="" /></p>
+
+<h2>2、远程下载加密文件，并且本地解密</h2>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/d1a92f48026edd733ba777937df1b888.jpg" alt="" /></p>
+
+<p>木马程序为了方便远程的文件更新，会把恶意代码放在远程的一个服务器中，而且会对这个文件进行加密，需要在本地解密，然后装载到内存中,在本地文件中无法得到解密后的文件，只有一个被加密的残留文件：</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/1facc81b16208e0e039459b007b96144.jpg" alt="" /></p>
+
+<p>通过调用木马本身的解密程序，我们对这个木马的文件进行了解密，但是木马会把这个代码放在内存中，这是解密后抓取的相关文件，是一个可执行的文件：</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/bf2c70103e491754cfe14727ad0b42b4.jpg" alt="" /></p>
+
+<p>为了方便伪装，木马文件使用了其他公司的版权信息：</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/e3702e6e6fe7a16e838415aec607daa7.jpg" alt="" /></p>
+
+<h2>3、大量增加无关函数调用,检测和对抗杀毒软件</h2>
+
+<p>为了增加分析的难度，内存中抓取的文件也是被加密的，这个文件是程序执行的主要部分，为此我们还要继续解密。</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/3dbd3b7866f08e835057a11a94bcfa7c.jpg" alt="" /></p>
+
+<p>经过继续的解密和分析，最终的解密文件的内部函数调用是这样的：</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/41a8a19b04e9eaa5714fef6b04e9d4c1.jpg" alt="" /></p>
+
+<p>也有的是这样的：</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/16358f6bb88a324a6576961b2cd482d5.jpg" alt="" /></p>
+
+<p>这些调用显然与普通程序不同，这是一种通过大量增加类似sleep和Rectangle等跟木马功能完全无关的api调用，来实现干扰杀毒查杀的手段。</p>
+
+<p>同时还会木马程序还会遍历检测各个杀毒软件。</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/d247f80ce8aae5c19e4b73785457e6a4.jpg" alt="" /></p>
+
+<p>为了躲避杀软的追杀，还采用了域名、网盘空间上线等上线方式：</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/395d453eb5c7ef0bfa5cd454ecbb55fe.jpg" alt="" /></p>
+
+<p>通过以上的木马样本分析，我们可以看到，大灰狼远控具有比较丰富的免杀和对抗经验，那么木马作者究竟是什么人呢？接下来，我们需要按图索骥去追查这个木马的来源和幕后情况。</p>
+
+<h1>0x02 真凶调查</h1>
+
+<hr />
+
+<p>在处理数百个样本的过程中，我们逐步锁定了一个很关键的域名，这个域名在上文中相信大家也看到了：ckshare.com。</p>
+
+<p>通过域名查询我们定位到了牧马人：</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/832082eba6f6dbab589f85a0c622373d.jpg" alt="" /></p>
+
+<p>通过搜索引擎还发现了非常关键的信息：一个专门销售大灰狼木马的网站：</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/f8afee40dbd49b9516debde42e92fbdd.jpg" alt="" /></p>
+
+<p>我们按照帖子的提示找到了该网站：</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/b8903bcc6fe19707a10187b25742f155.jpg" alt="" /></p>
+
+<p>这个网站的客服居然就是域名的所有者，显然这个qq就是牧马人了。</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/6ad1060a9d1159d3fbeb4816ea7d41bb.jpg" alt="" /></p>
+
+<p>我们发现该网站貌似正规，居然还有网站的备案信息：</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/7e08f506913a6dc48c8245ca7b3738c2.jpg" alt="" /></p>
+
+<p>通过获取的备案域名查询工信部网站的相关资料：</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/77f0cf1ae99afb79abdbde9c1c243d4d.jpg" alt="" /></p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/8d56b308f982451a9bb8b295a34f6d63.jpg" alt="" /></p>
+
+<p>显然这个域名和备案信息是不一致的。那么这个备案信息对应的究竟是哪个域名呢？</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/f2e9e3859e51c1b7e554ce7330dcc93b.jpg" alt="" /></p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/6656b7e217fb093edd6ed4323ee3dc6e.jpg" alt="" /></p>
+
+<p>可以看到备案信息就是木马的下载地址。同时下面还有一堆的域名，显然是牧马人留作备用的，同时我们获取了牧马人姓名等重要信息。</p>
+
+<p>继续查询这个域名的解析ip是在广东省，然而域名相关的地址是河南，显然牧马人可能会有其他马甲，继续追查。</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/ef3b1b82ade015fe2bf4df98093b8fab.jpg" alt="" /></p>
+
+<p>由于大灰狼远控网站提供的联系信息，我们进一步追查终于定位到了牧马人的重要信息，并假装买主与之联系：</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/14c136b106328f30844a84ce1606d743.jpg" alt="" /></p>
+
+<p>在追查的过程中，我们最终掌握了该网站的大灰狼远控销售状况：</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/e273aabe312aaf54f458899cf56ed5ad.jpg" alt="" /></p>
+
+<p>由于牧马人采用不同的等级销售方式，我们有理由确认这是一个资深的黑产“从业者”：</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/4bd3ba7f102e80ce58014c5f8d91444e.jpg" alt="" /></p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/92efef18c6b9d9e9a56f82cdef6599c4.jpg" alt="" /></p>
+
+<p>由于该牧马人有所戒备，难以通过qq聊天套出更多信息。不过从他炫耀的后台管理来看，与我们监控的木马传播状况是大体一致的，由此也佐证了这位木马贩子就是大灰狼远控的幕后黑手。</p>
+
+<h1>0x03 安全提醒</h1>
+
+<hr />
+
+<p>通过此次调查，360QVM团队逐步掌握了大灰狼远控的主要来源，这个远控木马在bt天堂挂马事件中非常猖獗，甚至把政府网站作为木马的下载地址，长期、持续地威胁着网民的财产和信息安全。</p>
+
+<p>防范大灰狼一类远控木马的几个小建议：</p>
+
+<ol>
+<li><p>及时打补丁。</p></li>
+<li><p>XP用户一定要开启安全软件防护。</p></li>
+<li><p>运行未知程序之前检查文件是否有正规的数字签名。</p></li>
+</ol>      </p>
+    
+</body>
+</html>

@@ -1,0 +1,55 @@
+<html>
+<head>
+     <title>编写基于PHP扩展库的后门 - lxj616</title>
+	 <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+</head>
+<body>
+<h1>URL:<a href="http://drops.wooyun.org/tips/3003">http://drops.wooyun.org/tips/3003</a></h1>
+
+      <p>
+        <p>from:<a href="http://stackoff.ru/pishem-rasshirenie-bekdor-dlya-php/">http://stackoff.ru/pishem-rasshirenie-bekdor-dlya-php/</a></p>
+
+<h2>0x00 前言</h2>
+
+<hr />
+
+<p>今天我们将讨论编写基于PHP扩展库的后门。通常来说，大部分入侵者都会在脚本中留下自定义代码块后门。当然，这些东西很容易通过源代码的静态或动态分析找到。</p>
+
+<p>利用PHP扩展库的好处显而易见：</p>
+
+<pre><code>很难寻找
+绕过disable_functions选项 
+有能力控制所有的代码
+访问代码执行的API
+</code></pre>
+
+<p>但是我们需要有编辑PHP配置文件的能力。</p>
+
+<!--more-->
+
+<h2>0x01 细节</h2>
+
+<hr />
+
+<p>//【译者注：用linux两条命令搞定了，何必windows费这么大劲】
+作为例子，我会用Windows来写。写扩展我用的Visual Studio 2012 Express版本。还需要的源代码最新版本，编译PHP库（可从同一来源收集）。为简单起见，我们需要是的php-5.5.15-Win32的VC11-86和源PHP-5.5.15-src.zip</p>
+
+<p>解压使用C编译PHP:PHP，源代码在C:PHP-SRC。</p>
+
+<p>然后，你需要进行一些设置。</p>
+
+<p>1）添加预处理器定义：</p>
+
+<pre><code>ZEND_DEBUG=0 
+ZTS=1
+ZEND_WIN32 
+PHP_WIN32 
+</code></pre>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/ec4dc6890d89ee1d361066c22a22d842.jpg" alt="enter image description here" /></p>
+
+<p>预处理器定义 
+2）添加的目录，用于连接源：</p>
+
+<pre><code>C: PHP-SRCmain
+C: PHP-SRC

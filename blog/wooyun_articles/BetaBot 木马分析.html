@@ -1,0 +1,286 @@
+<html>
+<head>
+     <title>BetaBot 木马分析 - 阿里云安全</title>
+	 <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+</head>
+<body>
+<h1>URL:<a href="http://drops.wooyun.org/papers/10260">http://drops.wooyun.org/papers/10260</a></h1>
+
+      <p>
+        <p><strong>作者:喔欧（阿里巴巴安全部安全威胁情报中心）</strong></p>
+
+<h1>0x00 背景介绍</h1>
+
+<hr />
+
+<p>在当下全球网络威胁活动中，国外攻击者主要使用Zeus、CryptoWall、Bedep、各类常见RAT工具等作为恶意负载，但在最近我们监控恶意威胁的过程中，发现个别高级样本攻击中使用了较为少见的BetaBot木马，关于此木马很少有相关的分析资料。在进一步了解、分析后发现，该木马还是具有很强的危害和对抗手段。为了方便监控BetaBot木马恶意攻击活动，所以记录相关分析结果，以供参考。</p>
+
+<h1>0x01 功能介绍</h1>
+
+<hr />
+
+<p>BetaBot，又被称为Neurevt，大概从2013年3月出现在地下市场被出售，售价大约在$120到$500。使用HTTP协议进行通信，使用RC4算法进行加密，代码使用C++语言编写，功能强大。据作者声称，该木马具备破坏杀软、自保护、BotKiller、Userkit(Ring3 Rootkit)、自定义注入技术、防其他木马感染、、DDoS、网络监视/阻塞、USB设备感染、SOCKS4代理、自校验保护、过UAC、反Sandbox等功能。</p>
+
+<!--more-->
+
+<p>下图为示例的BetaBot服务端界面</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/395301444861e51114367ddabcd8c167.jpg" alt="" /></p>
+
+<h1>0x02 木马功能</h1>
+
+<hr />
+
+<h2>系统驻留</h2>
+
+<p>添加注册表自启动</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/ef6fca2f91573b8589be4283883007f9.jpg" alt="" /></p>
+
+<p>添加Windows Tasks</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/544144558e48cab83f5da41d9f975089.jpg" alt="" /></p>
+
+<h2>收集信息</h2>
+
+<p>运行环境、系统信息、硬件信息、软件信息等</p>
+
+<p>例如软件信息搜集</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/86a5692b6ba9c670688b29547c94bb25.jpg" alt="" /></p>
+
+<h2>启动参数</h2>
+
+<p>部分命令以程序启动参数传入解析并执行</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/7791302b43cb709c746bb0e0d971e371.jpg" alt="" /></p>
+
+<h2>DDoS</h2>
+
+<p>支持4种类型的DDoS攻击方式</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/bd6086a878dc31387a976f527b96cc26.jpg" alt="" /></p>
+
+<h2>System Wide Userkit(Ring3 Rootkit)</h2>
+
+<p>功能名称引用作者描述，用于隐藏保护木马。</p>
+
+<p>HOOK API列表</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/7fd4c07d46060f905aba401640fe62fb.jpg" alt="" /></p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/124f17fbe383e1b539f9445dd488540c.jpg" alt="" /></p>
+
+<h2>UAC欺骗绕过</h2>
+
+<p>根据用户语言习惯构造错误信息，欺骗用户</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/08447701d347706f7f240365c3450e50.jpg" alt="" /></p>
+
+<p>调用cmd.exe或者rundll32.exe触发UAC，实际调用木马自身</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/39ebcbfb7c5cd58d67262f9673e349c2.jpg" alt="" /></p>
+
+<p>根据用户语言习惯构造错误信息</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/adde68677512eb7bea85eff91a177c7d.jpg" alt="" /></p>
+
+<p>在BetaBot木马对抗杀软介绍时作者也提到了使用”社会工程学”的手段</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/00b808340104a382ee54c6e128cde01d.jpg" alt="" /></p>
+
+<h2>配置解密</h2>
+
+<hr />
+
+<p>BetaBot的配置数据包含运行时所需要的释放目录位置、C&amp;C、通信密钥等重要信息，并加密存放在木马文件内。</p>
+
+<p>配置数据解密流程可以分为:</p>
+
+<ol>
+<li>解密整体Config</li>
+<li>依次解密C&amp;C Entry</li>
+</ol>
+
+<p>配置文件结构大小是0x0D56字节(随木马版本更新)，下图为解密整体config初始化代码，构造参数，动态解密执行代码，替换启动线程。</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/6ebe3fd948074cccc40b868cc9f33231.jpg" alt="" /></p>
+
+<p>解密线程从imagebase搜索加密config特征，通过RC4和4字节异或进行解密，RC4解密key在自身代码中保存，解析出所需数据后，使用自更新的加密key重新加密。</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/8a932fc03abdf7b8347a495943c610a5.jpg" alt="" /></p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/ee069e0f76249d6c0651deea0c6b8a15.jpg" alt="" /></p>
+
+<p>解密结果如下</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/c3fe8f35f6333298044bfcdc24b7e605.jpg" alt="" /></p>
+
+<p>上图中前半部分已经解密，偏移0x156起始的C&amp;C Entry还需要使用图中偏移0x6选中内容作为key解密，解密流程见下图</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/f390a8ae0b51c141d1f4b0efe5ffbcc1.jpg" alt="" /></p>
+
+<p>可以看出该木马最多可以支持16个C&amp;C配置。</p>
+
+<p>例如解密出的一条C&amp;C配置，其中包含了域名(偏移0x26)、端口(偏移0x14)、path(偏移0x66)、C&amp;C通信key1(偏移0xAA)、key2(偏移0XB7)。</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/74c563f91e9e2bfc34a75f94f93cc436.jpg" alt="" /></p>
+
+<h2>C&amp;C通信解密</h2>
+
+<hr />
+
+<h3>请求过程</h3>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/07a036c79e4dabbb1132c897e04b0d26.jpg" alt="" /></p>
+
+<p>构造请求数据</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/1ae0cc17ffc8c36875ad451d219702b4.jpg" alt="" /></p>
+
+<p>RC4加密请求数据并进行bin2hex转换，加密key是由C&amp;C Entry配置的key1和随机字节序列拼接处理得到。</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/d883ea8b96660883ae4ad23778359f77.jpg" alt="" /></p>
+
+<p>第一次请求会附上额外信息。</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/bf494ee0e79ef1cfd2e54981720d1225.jpg" alt="" /></p>
+
+<p>额外信息异或特定值并进行bin2hex转换。</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/45af42c2fa180b98032d1e43f835ccbd.jpg" alt="" /></p>
+
+<p>最后将参与加密请求数据的随机字节序列进行bin2hex转换和上述bin2hex转换信息一起发送到服务端。</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/f74e27209590f8a380d9f414d97e9c92.jpg" alt="" /></p>
+
+<p>发送数据如下</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/5e60f1531f5d7061e8cd43564ffd7c1b.jpg" alt="" /></p>
+
+<h3>响应过程</h3>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/fcd88f1036e01ba0ec54d92f942f97ee.jpg" alt="" /></p>
+
+<p>服务器响应包含两部分，header和body。</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/f9b6ac972381cd8d9b7c53f571f535cc.jpg" alt="" /></p>
+
+<p>首先需要解密header，其中最重要的是8个DWORD组成的数组streams_array，位于偏移0x3C，表示body各个结构的长度。</p>
+
+<p>解密过程如下，RC4加密key是由C&amp;C Entry的key1和response数据的前四个字节组合异或得到。</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/d467f7ad9eb693127f462acb348324b6.jpg" alt="" /></p>
+
+<p>最后根据streams_array计算body长度然后解密。</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/c019a3ac2d5bd0a916ac56c397de0d66.jpg" alt="" /></p>
+
+<p>加密的body位于偏移0x5C，解密过程如下，RC4加密key是由C&amp;C Entry的key2和response数据偏移0x4四个字节组合异或得到。</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/ff4e06bbd63bc0ffe12ae24c9b3df6fb.jpg" alt="" /></p>
+
+<p>最终解密结果如下图，此图所示是服务端下发的监视域名列表配置。</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/616a1815540306816b0111621551dd6d.jpg" alt="" /></p>
+
+<h2>其他</h2>
+
+<p>DNS阻断、表格抓取等功能可见参考链接。</p>
+
+<h1>0x03 对抗手法</h1>
+
+<hr />
+
+<h2>反调试</h2>
+
+<p><strong>1.ZwQueryInformationProcess检测DebugPort</strong></p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/117dcd6c4c1f236457959eb8e1bcf65e.jpg" alt="" /></p>
+
+<p><strong>2.DbgBreakPoint对抗</strong></p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/757354ce4aaf1fbcd7faa3e55bde5646.jpg" alt="" /></p>
+
+<p><strong>3.ZwSetInformationThread</strong></p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/67f5cefbdab0d2400738481eb7644167.jpg" alt="" /></p>
+
+<p><strong>4.多处代码执行过程反调试对抗</strong></p>
+
+<p>例如解密config代码中</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/9df44520b0bbf7e313443a8d192e9ce0.jpg" alt="" /></p>
+
+<h2>反虚拟机</h2>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/e951c730b435d7749622cbfae5a70009.jpg" alt="" /></p>
+
+<h2>反JoeBox,GFI,Kasperksy,CWSandbox,Anubis等沙箱</h2>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/5b14556ae4ed943ec7763beb0e5797fa.jpg" alt="" /></p>
+
+<h2>反Sandboxie沙箱</h2>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/83b86f69963c10fc35d046b9eba11816.jpg" alt="" /></p>
+
+<h2>反wine</h2>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/7601f7d71dbba56fd11d1841fa106443.jpg" alt="" /></p>
+
+<h2>导入API加密</h2>
+
+<p>通过遍历系统dll导出表，拼接成moduleName+’.’+APIName计算hash进行搜索</p>
+
+<p>Hash计算方式</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/47037177eb5d9b422af37a3a79431277.jpg" alt="" /></p>
+
+<h2>对抗杀软</h2>
+
+<p>检测杀软类型</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/cef593934ecba8e51bb030a6580f2870.jpg" alt="" /></p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/8e6863e84ca34b405021743ee3795435.jpg" alt="" /></p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/3dd4cf97dd1fdaf42149fd532865f7bc.jpg" alt="" /></p>
+
+<p>禁用杀软</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/73e7e9c8b5a07f14e3a648601b7266c9.jpg" alt="" /></p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/0b43daddf3865ee74e24d42687afa85d.jpg" alt="" /></p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/7cddcfc85a1e341dea0229ee877c581d.jpg" alt="" /></p>
+
+<h2>代码加密、动态替换</h2>
+
+<p>解密执行代码过程，例如解密Config线程函数体内容</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/829204fa0ba43de393ba880900b6092c.jpg" alt="" /></p>
+
+<p>在一些函数调用时通过替换stub参数实现。例如stub原始代码</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/015b0781715832f1c4f5b64e5b457bbc.jpg" alt="" /></p>
+
+<p>替换参数</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/4a57de324a1a11f73a3d21148fc57224.jpg" alt="" /></p>
+
+<h2>Snort检测规则</h2>
+
+<pre><code>alert http any any -&gt; any any (msg: "Betabot Windows RAT Trojan Online Request"; flow: established, to_server; content: "POST"; http_method; content:"="; http_client_body; pcre: "/=\d{8}&amp;/P"; content: "1="; distance:1; http_client_body; content: "2="; distance:1; content: "3="; distance:1; content: "4="; distance:1; content: "5="; distance:1; flowbits: set, betabot_online; classtype: trojan-detect; sid:010200291; rev:1; )
+</code></pre>
+
+<h1>0x04 参考链接</h1>
+
+<hr />
+
+<ul>
+<li><a href="https://securityintelligence.com/beta-bot-phish/">https://securityintelligence.com/beta-bot-phish/</a></li>
+<li><a href="http://www.slideshare.net/securityxploded/dissecting-betabot">http://www.slideshare.net/securityxploded/dissecting-betabot</a></li>
+</ul>      </p>
+    
+</body>
+</html>

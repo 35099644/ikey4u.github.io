@@ -1,0 +1,119 @@
+<html>
+<head>
+     <title>Burp Suite使用介绍（四） - 小乐天</title>
+	 <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+</head>
+<body>
+<h1>URL:<a href="http://drops.wooyun.org/tips/2504">http://drops.wooyun.org/tips/2504</a></h1>
+
+      <p>
+        <h2>0x00 Intruder Scan</h2>
+
+<hr />
+
+<p>发送一个你想csrf_token的请求到intruder。</p>
+
+<h3>1)Positions设置如下：</h3>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/2db1b4dfc2f4c16304e79db399352ab8.jpg" alt="enter image description here" /></p>
+
+<!--more-->
+
+<h3>2)Options设置如下：</h3>
+
+<pre><code>Request Engine
+</code></pre>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/7024af566931b4556adeb1551e788647.jpg" alt="enter image description here" /></p>
+
+<pre><code>options&gt;Grep-Extract&gt;add
+</code></pre>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/1b4502d6f4ad9c42723633181822ac73.jpg" alt="enter image description here" /></p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/56b896be2d8fce94499b665049396ef5.jpg" alt="enter image description here" /></p>
+
+<h3>3)payloads设置如下</h3>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/ba664dcdcc01c189f8e0ccc02697cf97.jpg" alt="enter image description here" /></p>
+
+<p>这里payload type设置递归(Recursive grep)，在Initial payload for first request设置一个有效的csrf_token值作为第一项</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/52198814ddd84968f20e846173c35196.jpg" alt="enter image description here" /></p>
+
+<h2>0x01 Active Scan with sqlmap</h2>
+
+<hr />
+
+<p>其实这个结合sqlmap有两种方法，然后跟@c4bbage讨论了下,我采用的也是他那个代码，但是在注入的时候我发现在burpsuite里查看HTTP history(历史记录)里的token是没有变化的，但是还是可以注入，刚开始挺纳闷的，我以为他写的那个代码有问题，后来他说不是，在burpsuite里是看不到的，然后我也同意他说的，就是替换这个过程直接经过宏功能替换了，不会显示在历史记录里。我这里就说下第二种方法吧。第一种点这里。</p>
+
+<h3>1)首先是登录csrf_token页面，不需要拦截。然后选择Options>Sessions>Add</h3>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/15ea60527918eda17d54d220233ff9d4.jpg" alt="enter image description here" /></p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/964474f3eb53e103b3c2e68001f3eb8e.jpg" alt="enter image description here" /></p>
+
+<h3>2)接着会弹出一个窗口选择Select macro>add</h3>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/2972cc53219cc05aac3e4cc500638c4e.jpg" alt="enter image description here" /></p>
+
+<h3>3)点击add後会弹出两个页面如图所示：</h3>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/61c4f0f62e6c7b8edb3cb5d230f10fcd.jpg" alt="enter image description here" /></p>
+
+<h3>4)选择2-3个页面，第一个页面是请求页面，第二个页面是post数据的时候的页面，为了便于查看我这里添加了3个页面。</h3>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/6a9b24db951db385243830a980501085.jpg" alt="enter image description here" /></p>
+
+<h3>5)选择第二个页面点击Configure item，指定root，添加一个自定义token参数</h3>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/52822233fbf7cd34208a3aeaec7135fa.jpg" alt="enter image description here" /></p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/103bc0ded61172ae5465eb77c9ef4b0b.jpg" alt="enter image description here" /></p>
+
+<h3>6)最后配置完可以点击Test macro看看我们配置成功了没</h3>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/e53c19e96c8f5c6aa17facdc6f893192.jpg" alt="enter image description here" /></p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/bd66a67aacbafe7c4b34b71529c9541b.jpg" alt="enter image description here" /></p>
+
+<h3>7)如果以上配置成功，再选择Scope选择应用范围</h3>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/76c49a7012980f729fd36d208d5407a2.jpg" alt="enter image description here" /></p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/7e1c05d154b4ae2b2c6d91778f80e688.jpg" alt="enter image description here" /></p>
+
+<h3>8)接着就是放到sqlmap里去跑数据咯</h3>
+
+<p>如果是post页面，这里是把post的数据保存到request.txt文件里，然后运行命令如下：</p>
+
+<pre><code>./sqlmap.py -r request.txt –proxy=http://127.0.0.1:8080
+</code></pre>
+
+<p>如果是get页面命令如下：</p>
+
+<pre><code>./sqlmap.py –u “www.target.com/vuln.php?id=1” –proxy=http://127.0.0.1:8080
+</code></pre>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/3361df54b915f8510a083c2e2a75149e.jpg" alt="enter image description here" /></p>
+
+<h2>0x02 Session Randomness Analysis Sequencer</h2>
+
+<hr />
+
+<p>请求拦截一个地址，在响应内容中如果有cookie，或者我们可以在sequencer中自定义配置token参数</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/0babe0dd78818c3fd38f54e40126ed57.jpg" alt="enter image description here" /></p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/5128b690f0aaae2f08667bbd3a1fe161.jpg" alt="enter image description here" /></p>
+
+<p>然后点击Start live capture进行分析</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/fd3352bca389c25cadd54170c15f4e3d.jpg" alt="enter image description here" /></p>
+
+<p>等分析完即可生成报告，通过报告我们可以看出token是否可以伪造。</p>
+
+<p>参考资料：http://resources.infosecinstitute.com/session-randomness-analysis-burp-suite-sequencer/</p>      </p>
+    
+</body>
+</html>

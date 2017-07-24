@@ -1,0 +1,199 @@
+#! /usr/bin/python3
+
+import os
+import glob
+import re
+import sys
+
+header = '''
+<!doctype html>
+<html>
+<head>
+<!-- 网页头部信息 -->
+<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+<meta charset="UTF-8">
+<!-- 网页标题 -->
+<title>bugnofree</title>
+<!-- 网页图标 -->
+<link rel="shortcut icon" href="http://www.ikey4u.com/home-assets/favicon.ico" type="image/x-icon" />
+<!-- 菜单样式 -->
+<link rel="stylesheet" href="http://www.ikey4u.com/home-assets/white-menu.css" type="text/css">
+<!-- 文章样式 -->
+<link rel="stylesheet" href="http://www.ikey4u.com/blog/blog-assets/blog-style.css" type="text/css">
+ 
+<!-- 代码高亮:不再使用 2016-06-16 Thu 02:27 PM -->
+<!--<link rel="stylesheet" href="http://www.ikey4u.com/home-assets/highlight-codes/hljs.css">-->
+<!--<link rel="stylesheet" href="http://www.ikey4u.com/home-assets/highlight-codes/hljs-sublime.css">-->
+<!--<script src="http://www.ikey4u.com/home-assets/highlight-codes/hljs.js"></script>-->
+<!--<script src="http://www.ikey4u.com/home-assets/jquery/2.1.4/jquery-2.2.0.min.js"></script>-->
+<!--<script type="text/javascript">-->
+  <!--hljs.initHighlightingOnLoad();-->
+<!--</script>-->
+
+
+<!--数学公式-->
+    <!--MathJax路径:-->
+    <script type="text/javascript" async 
+    src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=AM_CHTML">
+    </script>
+</head>
+
+<body >
+    <!-- 菜单条 -->
+	<center>
+		<!-- 保证菜单条完整填充:上右下左 -->
+		<div style="margin: 0px 0% 12px 0%;">
+		<ul id="white-menu">
+		<li ><a href="http://www.ikey4u.com/" title="Home">Home</a></li>
+		<li ><a href="http://www.ikey4u.com/blog/blog-index.html">Blog</a></li>
+		<li ><a href="http://www.ikey4u.com/shotimes/showtimes-index.html">Show Times</a></li>
+		<li><a href="http://www.ikey4u.com/readings/readings-index.html">Readings</a></li>
+        <li ><a href="http://www.ikey4u.com/about/about-index.html">About</a></li>
+		<!-- 菜单与文章分割线:黑色,宽度为2px -->
+		<li style="background:#000;width:2px;height:52px;"></li>
+		<!-- 文章标题 -->
+		<p>乌云文章备份|bugnofree|2016-08-17 Wed 11:02 PM|</p>
+		</ul>
+		</div>
+	</center>
+<!-- ===========================================下面开始写文章============================================ -->
+<br/> <br/> <br/> <br/>
+<br/>
+<center><b>想移植到你的博客么?用这个脚本: <a href="./wooyun.py.text">wooyun.py</a></b></center>
+<br/>
+<hr/>
+<!-- 乌云文章列表:开始 -->
+<div style="margin:20px">
+<ol>
+'''
+
+footer = '''
+<!-- 乌云文章列表:开始 -->
+</ol>
+
+</body>
+<!-- ===========================================联系方式============================================ -->
+<br/><br/><br/>
+<hr/>
+本博客不设置评论功能.如有问题可以通过我的邮箱<a href="mailto:up2geek@163.com">up2geek@163.com</a>或者新浪微博:<a href="http://weibo.com/bugnofree" target="_blank">bugnofree</a>联系我.<br/><br/><br/>
+</html>
+'''
+
+
+
+# debug:打印 html 页面(以字符串存储在contents中)中的所有图片
+def printimgs(contents):
+    imgs = re.findall(r"<img\s+src=\".+\.(jpg|png)",contents)
+    print(len(imgs))
+    print(imgs)
+    return imgs
+
+
+# 函数 modimgpath 中正则替换用到的函数
+def alterimg(match):
+    hybrid = match.group()
+    imgname = hybrid[hybrid.find("/") + 1:]
+    newtag = "<img src=\"" + imgrepo + imgname
+    return newtag
+# @param ouputdir 修改 html 中的图片路径后 html 存放的位置
+# @param names 要修改 html 文件名称列表
+def modimgpath(ouputdir,names):
+    # 修改所有图片路径
+    print("Update Images path ...")
+    i = 1
+    for name in names:
+        with open(name,"r") as f:
+            contents = f.read()
+            # 注意是非贪婪模式匹配
+            newcontents = re.sub(r"<img\s+src=\"pics/.+?\.jpg",alterimg,contents)
+            with open(outputdir + "/" + name,"w+") as ff:
+                ff.write(newcontents)
+                print("%5d: write to %s ..." % (i,outputdir + "/" + name))
+                i = i +1
+
+
+# @param outputdir 文章索引页 index.html 输出目录
+# @param names 文章名称列表
+# @param url 你的网络存放地址
+# @header 索引页面头部
+# @footer 索引页面尾部
+def generateindex(outputdir,names,url,header,footer):
+    # 生成索引页
+    print("Generate index page ...")
+    with open(outputdir + "/" + "index.html","w+") as f:
+        f.write(header)
+        for name in names:
+            bname = os.path.splitext(name)[0]
+            print("Add article "+ bname + "...")
+            item = "<li><a href=\"" + url + "/" + name +"\"" \
+            + " target=\"_blank\">" + bname + "</a></li>"
+            f.write(item)
+        f.write(footer)
+
+# @brief 生成带图片的乌云文章列表
+# @filename wooyun.py
+# @author bugnofree
+# @date 2017-05-27
+# @email up2geek@163.com
+# @notes 使用方法如下:
+# 1.自定义索引文件的头部(header)和尾部(footer)
+# 2.用法见下
+    #python3 wooyun.py
+    ## 无参数(如果你想移植,请不要用无参数形式)
+        #默认使用这个图片库:https://github.com/ikey4u/WooyunImages/raw/master/pics/
+        #输出目录:"../wooyun_articles"
+        #网页存储地址:"http://www.ikey4u.com/blog/wooyun_articles"
+    #python3 wooyun.py url
+    ## 一个参数:网页存储路地址
+        #默认使用这个图片库:https://github.com/ikey4u/WooyunImages/raw/master/pics/
+        #输出目录:"../wooyun_articles"
+    #python3 wooyun.py imgsrepo ouputdir url
+    ##若提供三个参数
+        #第一个:图片库地址
+        #第二个:输出目录
+        #第三个:网页存储地址
+
+if __name__ == "__main__":
+    #存储图片库目录
+    imgrepo = ""
+    #输出目录
+    outputdir = ""
+    #你存放的网址目录
+    url = ""
+    #获得所有的文章html
+    names = glob.glob("*.html")
+    ## 无参数(如果你想移植,请不要用无参数形式)
+    #默认使用这个图片库:https://github.com/ikey4u/WooyunImages/raw/master/pics/
+    #输出目录:"../wooyun_articles"
+    #网页存储地址:"http://www.ikey4u.com/blog/wooyun_articles"
+    if(len(sys.argv) == 1):
+        imgrepo = "https://github.com/ikey4u/WooyunImages/"+"raw/master/"+"pics/"
+        outputdir = "../wooyun_articles"
+        url = "http://www.ikey4u.com/blog/wooyun_articles"
+    ## 一个参数:网页存储路地址
+    #默认使用这个图片库:https://github.com/ikey4u/WooyunImages/raw/master/pics/
+    #输出目录:"../wooyun_articles"
+    elif(len(sys.argv) == 2):
+        imgrepo = "https://github.com/ikey4u/WooyunImages/"+"raw/master/"+"pics/"
+        outputdir = "../wooyun_articles"
+        url = sys.argv[1]
+    ##若提供三个参数
+    #第一个:图片库地址
+    #第二个:输出目录
+    #第三个:网页存储地址
+    elif(len(sys.argv) == 4):
+        imgrepo = sys.argv[1]
+        outputdir = sys.argv[2]
+        url = sys.argv[3]
+    #其他情形就拉倒吧
+    else:
+        print("READ THE CODES BEFORE YOUR RUN IT!")
+        sys.exit()
+
+    if(not os.path.exists(outputdir)):
+        os.mkdir(outputdir)
+    modimgpath(outputdir,names)
+    generateindex(outputdir,names,url,header,footer)
+
+    print("All is done! By bugnofree")

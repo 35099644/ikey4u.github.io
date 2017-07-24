@@ -1,0 +1,126 @@
+<html>
+<head>
+     <title>DNS隧道技术绕防火墙 - Blood_Zero</title>
+	 <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+</head>
+<body>
+<h1>URL:<a href="http://drops.wooyun.org/tips/9597">http://drops.wooyun.org/tips/9597</a></h1>
+
+      <p>
+        <h1>0x01 概念</h1>
+
+<hr />
+
+<p>隧道技术（Tunneling）是一种通过使用互联网络的基础设施在网络之间传递数据的方式。使用隧道传递的数据（或负载）可以是不同协议的数据帧或包。隧道协议将其它协议的数据帧或包重新封装然后通过隧道发送。新的帧头提供路由信息，以便通过互联网传递被封装的负载数据。</p>
+
+<h1>0x02 实例分析- DNS隧道技术</h1>
+
+<hr />
+
+<p>环境：客户机（Kali）+DNS服务器（window2003）+目标机（redhat7）</p>
+
+<h2>DNS服务器：192.168.10.132</h2>
+
+<p>1、新建一个名字为”bloodzero.com”的正向解析域</p>
+
+<!--more-->
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/c973a918068812ad4c8ee74584c62184.jpg" alt="" /></p>
+
+<p>2、新建一个主机：IP为攻击者kali的IP</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/db79c40438b9a1844f47d23d12633e3f.jpg" alt="" /></p>
+
+<p>3、新建一个委托</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/4a4243edff59a347d6a9c8bf1fc2c2e8.jpg" alt="" /></p>
+
+<p>此时我们的DNS服务器就配置好了！</p>
+
+<h2>Kali：攻击者&amp;&amp;客户端 192.168.10.135</h2>
+
+<p>1、攻击端配置：</p>
+
+<p>修改dns2tcpd配置文件：</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/308adbe02358351ba84fcc49b93bfe82.jpg" alt="" /></p>
+
+<p>resources的IP为目标机的IP</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/067d9ca405104af691535a7e44ace602.jpg" alt="" /></p>
+
+<p>启动dns隧道的服务端</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/5870c7b6a147f48e91dc046dfd7f3d93.jpg" alt="" /></p>
+
+<p>2、客户端配置</p>
+
+<p>删除ssh连接的known_hosts文件</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/51694b462a814b0c016213cf16a6ff9d.jpg" alt="" /></p>
+
+<p>修改DNS解析文件:<code>vim /etc/resolv.conf</code></p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/d207183218c97111d2a225f340a9c290.jpg" alt="" /></p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/e8628f1032a3d72d16d719083bc681e4.jpg" alt="" /></p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/b6d424046791d01941fff698e373ab32.jpg" alt="" /></p>
+
+<p>配置dns隧道客户端程序</p>
+
+<p>在kali2.0中，没有配置文件，需要自己写配置文件</p>
+
+<p><code>vim /etc/dns2tcpc.conf</code></p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/ec0c729277c063e22d9ef5e0bf002adf.jpg" alt="" /></p>
+
+<p>测试是否可以提供服务</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/f6f390b66f3dd4e4245bf867cbf53668.jpg" alt="" /></p>
+
+<p>这个时候我们就已经配置成功了！</p>
+
+<h2>成功效果</h2>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/92d5eb21db82d1f72930145cd9145972.jpg" alt="" /></p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/b7e9cd6937478c2e6349a4c7713e9087.jpg" alt="" /></p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/9a82f2210505f3776b8c8249fbf3d0b0.jpg" alt="" /></p>
+
+<h1>0x03 分析结论</h1>
+
+<hr />
+
+<p>这个时候的流量走向：</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/a95d2a8cb72b9bf56abd2f31aa876cae.jpg" alt="" /></p>
+
+<p>本文中介绍的是DNS隧道服务器，和DNS隧道客户端是同一台机器，并不能说明问题，当DNS隧道服务器存在于防火墙之后，这个时候我们就可以利用此种技术来绕过大部分的防火墙。并且可绕过不开端口，隐蔽性好等；</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/5a9ac9f0eb39d84200a4140123a18cb4.jpg" alt="" /></p>
+
+<p>这里我使用另外一台客户机去连接目标机时，服务端监听的数据如下：</p>
+
+<ul>
+<li>目标机：192.168.10.133</li>
+<li>DNS隧道服务端：192.168.10.135</li>
+<li>DNS隧道客户端：192.168.10.134</li>
+<li>DNS服务器：192.168.10.132</li>
+</ul>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/a7a5d450063dd2ed458f2f071c195441.jpg" alt="" /></p>
+
+<p>客户端监听数据如下：</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/cb6388c11ed3001d0614109110977192.jpg" alt="" /></p>
+
+<p>发现能够监听到的ssh数据包是DNS隧道服务端与目标机之间的通信；</p>
+
+<p>而客户端与目标机之间的通信是DNS数据；</p>
+
+<p>这就是简单的配置DNS隧道；</p>      </p>
+    
+</body>
+</html>

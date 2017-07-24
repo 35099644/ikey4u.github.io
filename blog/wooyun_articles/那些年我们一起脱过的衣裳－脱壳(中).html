@@ -1,0 +1,306 @@
+<html>
+<head>
+     <title>那些年我们一起脱过的衣裳－脱壳(中) - 珈蓝夜宇</title>
+	 <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+</head>
+<body>
+<h1>URL:<a href="http://drops.wooyun.org/binary/9246">http://drops.wooyun.org/binary/9246</a></h1>
+
+      <p>
+        <h1>0x01 我能在万花从中脱去壳的衣裳!（续）</h1>
+
+<hr />
+
+<h2>3.3ESP定律法</h2>
+
+<h3>3.3.1ESP定律介绍</h3>
+
+<p>ESP定律法是脱壳的利器，是国外友人发现的。有了ESP定律，可以方便我们脱掉大多数的压缩壳。可谓是本世纪破解界中最伟大的发现之一。这里只简单的看一下狭义ESP定律的原理。</p>
+
+<p>当我们用OD载入之后开始就是 pushad 基本上就可以使用ESP定律脱壳了</p>
+
+<h3>3.3.2以老版菜刀为例:</h3>
+
+<p>首先查壳,还是UPX的壳</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/747cafc0f1205fc1d4fb0dcbb48cb71a.jpg" alt="" /></p>
+
+<!--more-->
+
+<p>1.使用OD载入之后开头是pushad,那么我们可以初步判断可以使用ESP进行脱壳</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/c909eae1b453c102c174b642435d3f99.jpg" alt="" /></p>
+
+<p>那么,我们该怎么判断到底能不能用ESP定律脱壳呢?</p>
+
+<p>按下F8(单步步过),既然叫做ESP定律,那么肯定跟右上角寄存器窗口,中的ESP有必然的联系的</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/381ad68636594a1f17b43ed704ffe019.jpg" alt="" /></p>
+
+<p>2.可以看到到了这一步,只有ESP是红色的(不用管EIP),那就可以使用ESP定律。</p>
+
+<p>选择ESP&#45;--||->右键&#45;--||->数据窗口中跟随</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/d4fec948165948ca89704c5eac6c8d6f.jpg" alt="" /></p>
+
+<p>这时我们可以看到数据窗口,变成了下图所示</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/fc4004501a64935a5c4f6d7048a2fead.jpg" alt="" /></p>
+
+<p>3.在HEX数据中选择任意一段(网上总有人说选一个字节,选两个字节,选四个字节),其实实际上选多少个都可以,但是只要从第一个开始选起。然后右键&#45;--||>断点&#45;--||>硬件访问&#45;--||>在Byte,Word,Dword选择任意一个都可以。</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/3468b09802901c12ec036d19057372db.jpg" alt="" /></p>
+
+<p>可以在调试中的硬件断点查看自己的断点</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/152ee97f7a611400909e5fc759130181.jpg" alt="" /></p>
+
+<p>4.然后按下F9运行程序,程序会自己断下来。断下来之后就会很快到达OEP,然后单步跟踪法一步一步向下</p>
+
+<p>遇到向上跳转则在它的下一行按F4(运行到此处)</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/1ec5543f4876c29c577f368d4303c28f.jpg" alt="" /></p>
+
+<p>下面看到一个大跳转,跳转过去就是OEP了</p>
+
+<pre><code>004AE9C4  - E9 DF6FFBFF jmp caidao.004659A8
+</code></pre>
+
+<p>5.到达OEP之后就可以开心的脱壳啦~(和单步跟踪法脱壳操作相同)</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/3453df222af77c53f772dc1e7822b2f2.jpg" alt="" /></p>
+
+<p>再介绍一种非常简单的方法,用插件下硬件断点</p>
+
+<p>在ESP右键选择 HW break [ESP] 她会自动下下硬件断点,之后直接按下F9运行程序再F8就到达OEP了</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/a5c1ff5dbcf623431f2fc2117823e552.jpg" alt="" /></p>
+
+<h2>3.4两次断点法</h2>
+
+<p>还是以菜刀为例吧,我保证是最后一次了%>.&lt;%</p>
+
+<p>1.选项&#45;--||>调试设置&#45;--||>异常 全部打上√,也就是忽略所有的异常</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/88e014bf12d691b2cf02ba81db352b87.jpg" alt="" /></p>
+
+<p>2.按键盘上的“ALT+M”组合键打开OD的内存窗口</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/dbc56ee589b2fd59e64cde96d525e82f.jpg" alt="" /></p>
+
+<p>3.如图,我们首先找到自己程序名的 .rsrc区段 按F2下断点 然后 Shift+F9 就会回到反汇编窗口</p>
+
+<p>然后再按"ALT+M" 然后找到程序的第一个.rsrc.上面的.CODE（也 就是00401000处）,按F2下断点。</p>
+
+<p>然后按SHIFT+F9就到达OEP或者到达了OEP的附近了,然后再用单步跟踪法就可以到达OEP了</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/3453df222af77c53f772dc1e7822b2f2.jpg" alt="" /></p>
+
+<p>然后怎么脱壳我就不说了。我用了三种方法脱下UPX,只是想证明脱壳是可以用很多种方法脱壳的。而不是总是看到xxx壳用什么方法去脱啊?这些问题。。。。。。</p>
+
+<h2>3.5一步到达OEP</h2>
+
+<p>1.首先必备的就是查壳嘛~ ASPack的壳</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/863c0fe3160514b932d878082cb3c79a.jpg" alt="" /></p>
+
+<p>2.首先将程序加载进OD 按F9开始执行</p>
+
+<p>在堆栈窗口可以看到 拖到最下边</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/42345a71a60d608aa8518c16e2526322.jpg" alt="" /></p>
+
+<p>3.然后慢慢向上找,因为我们的程序名称就叫ASPack,所以我们在向上找的第一个程序名称中,选中它,然后右键&#45;--||-->反汇编窗口中跟随</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/b4e4f20afd576a8aec49632e65bd7e79.jpg" alt="" /></p>
+
+<p>在反汇编窗口中按Ctrl+A(分析代码)</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/8a120566c51a8192375bf41e4efe30d8.jpg" alt="" /></p>
+
+<p>然后呢就能在堆栈窗口中可以看到一个括号将程序名称括起来了,这是一个段.</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/7399ab7e73a9f08f64930cf1ed7faabc.jpg" alt="" /></p>
+
+<p>4.然后需要在段中找到段首,也就是这个括号的开头.找到返回到xxx(代表程序名称)这一行,选择反汇编窗口中跟随.</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/0a2dab3823472da02e9891e0e5174035.jpg" alt="" /></p>
+
+<p>5.然后我们在反汇编窗口中向上找,肯定就在这附近,找了一下发现了OEP</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/2a335610841ab48dc74119f21d8e9215.jpg" alt="" /></p>
+
+<p>6.那么问题来了,我们程序都还没有开始调试,所以我们要怎么样才能将程序段在这里,然后进行脱壳呢?</p>
+
+<p>选中OEP 的第一行,右键&#45;--||-->数据窗口中跟随&#45;--||-->选择</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/df272e963e499fb45ae226abf8a00f73.jpg" alt="" /></p>
+
+<p>7.然后在数据窗口中可以看到前面两个HEX数据已经被选中了,然后</p>
+
+<p>右键&#45;--||-->断点&#45;--||-->硬件执行</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/9551b41a2f2322a997fc88a4795d55d6.jpg" alt="" /></p>
+
+<p>然后查看一下硬件断点下好了没有,ok</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/cb3d011e118adc4dafe2370e787388c0.jpg" alt="" /></p>
+
+<p>8.然后重新运行,按下F9执行程序,然后就直接在OEP断下来了,然后使用ollyDump脱壳进程进行脱壳.这个上面已经说了,现在我就不多说了</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/6c8a06bd07bbbe71c59f0631a027d71f.jpg" alt="" /></p>
+
+<h2>3.6最后一次异常法</h2>
+
+<p>在脱壳方法中，最后一次异常法，这是最基础的脱壳技术之一。</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/0e797bfff0aff536e447ff73b24d1487.jpg" alt="" /></p>
+
+<p>1.将待脱壳程序载入到OD中，单击OD的“选项”菜单，在弹出的菜单中单击“调试设置”命令，在随后弹出的“调试选项”对话框中切换到“异常”选项卡，清除该选项卡下所有复选框，也就是不忽略任何异常。</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/42f35c54a62fd0080b6fe81f484c70cc.jpg" alt="" /></p>
+
+<p>2.按Shift+F9让程序运行起来，记录按键的次数。记录为x。我这里是两次就让程序运行起来了,但是你有可能需要十次或者二十次才能运行起来。</p>
+
+<p>3.然后回到OD中，按Ctrl+F2(重新载入程序)，按1次Shift+F9。那么为什么按1次呢?上面让记录为x,所以这里需要按x-1次。例:如果让一个步骤按了10次运行起来了,我们在这里就要按9次Shift+F9。</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/6837442527b35b38d126bf331ee9233e.jpg" alt="" /></p>
+
+<p>4.在OD右下角窗口中找到“SE句柄”或是“SE处理程序”，右键&#45;--||-->反汇编窗口中跟随(如果没有反汇编窗口中跟随,可以在反汇编窗口按Ctrl+G 输入"SE处理程序"前面的地址)。</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/12692e275bb7fb35a8a9a87886879b15.jpg" alt="" /></p>
+
+<p>5.在OD的反汇编窗口中跟随到上一步记录下的内存地址，并在此内存地址处下一个断点。</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/2c8c9cc7a8e87159e00cf37dac3be954.jpg" alt="" /></p>
+
+<p>6.按键盘上的“Shift+F9”组合键让程序运行到上一步下的断点处，按键盘上的“F2”键取消此处的断点。</p>
+
+<p>7.使用单步跟踪法追踪(一直按F8,遇到向上的跳转在下面那行按F4(运行到此处))直到到达OEP</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/2ce0539137d6b4dcdeeebff7fd646ffc.jpg" alt="" /></p>
+
+<p>然后到了OEP怎么脱壳,在这里我就不说了</p>
+
+<h2>3.7模拟跟踪法</h2>
+
+<p>不管要怎样先查壳再说 nPack的壳</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/85410f45808cfb6200d2585b748d9505.jpg" alt="" /></p>
+
+<p>在讲到的众多脱壳方法中，我们首先讲了单步跟踪法脱壳，因为单步跟踪脱壳法是脱壳技术中最基础的方法，在后面其它的一些脱壳方法中总会或多或少的配合单步跟踪法才能顺利完成脱壳工作。便是始终是一次次的按“F8”键来单步跟踪程序，偶尔遇到回跳就跳过执行，这样机械性的操作很是烦人，那么能不能让机器来代替人力，让工具帮我们单步跟踪呢？答案是肯定的，这也就是这节讲的内容——模拟跟踪法。模拟脱壳法就是模拟单步跟踪来进行查找OEP。</p>
+
+<p>网上的大部分模拟跟踪法的常见步骤是这样的：</p>
+
+<p>1、将待脱壳程序载入OD中，先简单的跟踪一下程序，看看有没有SEH暗桩；</p>
+
+<p>2、按键盘上的“ALT+F9”打开OD的内存窗口，找到“SFX，输入表，资源”的行，并记录此行的内存地址；</p>
+
+<p>3、在OD的命令行窗口执行命令“tc eip&lt;上一步中记录下的地址”，命令执行后就会跟踪到OEP。</p>
+
+<p>然而这种方法可以是可以,但是可能从早上开始跟踪,一直跟踪到晚上都没有跟踪完成。网上那些人拿着文章转来转去,也没见得谁真的去试验过...效率实在太慢了,那不如我们来帮机器一把?</p>
+
+<p>首先,需要用到的是上面所讲到的两次断点法,使用两次断点法,按照两次断点法的最后一次Shift+F9之后</p>
+
+<p>然后ALT+M回到内存窗口,然后选中程序名称的SFX,输入表.</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/925b1723cca0d7e1e7664adf60c869d0.jpg" alt="" /></p>
+
+<p>然后在OD的命令执行窗口执行命令"tc eip&lt;SFX,输入表这一行的地址"然后回车,执行命令,然后OD就能迅速的到达OEP了。</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/9403a03775ee766b34a8ad97c5641412.jpg" alt="" /></p>
+
+<p>当这里的跟踪变为暂停的时候,说明OEP已经到达了。</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/1f39866aed6e0b9343513478a1f8ed7a.jpg" alt="" /></p>
+
+<p>那么,这样就有人说了,如果这样我都能用两次断点法了,我为什么还要用模拟跟踪法,这样还有什么存在的意义?</p>
+
+<p>如程序出错了,或者当你找不到OEP的时候就能使用此方法找到OEP。</p>
+
+<p>到了OEP然后改怎样脱壳我就不说了,上面都写了好几次了~</p>
+
+<h2>3.8“SFX”法</h2>
+
+<p>查壳 0xpack的壳</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/a804ea6db1650106415d4fb592a0e38c.jpg" alt="" /></p>
+
+<p>在OD中，不但可以利用模拟跟踪来代替单步跟踪进行脱壳，从而节省劳动力，还有一种SFX自动脱壳的方法也可以节省劳动力，并能快速有效的将程序的壳脱掉。</p>
+
+<p>使用SFX自动脱壳法脱壳的常见步骤：</p>
+
+<p>1、将OD设置为忽略所有异常；</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/3389ea88b1e22b1bec074b9290da3887.jpg" alt="" /></p>
+
+<p>2、在OD的“调试选项”对话框的“SFX”选项卡中选择“字节模式跟踪实际入口”选项并确定；</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/c72b15fc13112d1d57d8ac83b141a9b2.jpg" alt="" /></p>
+
+<p>3、将程序重新载入OD，然后左下角就会开始跟踪了,然后过一会儿就会自动断在OEP了!</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/1c45a04a0ff690a64451517e76147165.jpg" alt="" /></p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/eb70e1f25fe19daec1e6c0e1ebcbe3dc.jpg" alt="" /></p>
+
+<h2>3.9出口标志法</h2>
+
+<p>前面几个脱壳方法中有一个共同点，就是在单步跟踪到popad指令后面不远处的jmp指令的时候，就可以大胆的判断这个jmp指令的目的地址就是OEP。</p>
+
+<p>原因很简单，popad指令用于将壳运行之前保存的环境恢复，使原程序能正常运行。有些壳的popad指令很少，我们就可以查看被这种壳加壳的程序的所有popad指令，找到后面存在jmp指令的popad指令，然后来到其后的jmp指令的目的地址，这很可能就是OEP，然后就可以进行脱壳了。</p>
+
+<p>1.将待脱壳程序载入OD中，在OD的反汇编客人口中单击鼠标右键，在弹出的右键菜单中单击“查找”→“所有命令”，在弹出的输入框中输入“popad”并按“查找”按钮,记得去掉整个块前面的勾啊!!!!</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/3ed206911e8e287b17c39d8c86ce816e.jpg" alt="" /></p>
+
+<p>2.当遇到第一个popad的时候按下F4(运行到此处),在这里,我的示例程序已经运行起来了,这就是我上面所说的"跑飞了",然后重新载入重新按照步骤1.查找popad,因为我们的第一个popad已经跑飞了,所以我们不理它。哼!然后按Ctrl+L查找下一个。</p>
+
+<p>然后第二个popad又跑飞了,哼!重新开始,第一个和第二个我都不理你们了!</p>
+
+<p>然后开始第三个popad,依然是跑飞。重来,第一.二.三我都不理你们了,直接按查找4次popad,执行这里,没有"跑飞"其实如果经验丰富的已经看出来马上就到达OEP了。而我还在假装不知道,然后F8单步跟踪。</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/10e5ea156a98231f4e40052c9a08026c.jpg" alt="" /></p>
+
+<p>直到到达OEP</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/014461a2f58d27c26ea2c51b8c2fab97.jpg" alt="" /></p>
+
+<p>然后在这里说一下LordPE+ImpREC脱壳吧,其实我在实战中很少用OD自带的插件脱壳的,因为,不是特别好用。</p>
+
+<p>1.首先记住不要关闭OD,然后打开LoadPE,在最下面选择程序右键&#45;--||-->修正镜像大小</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/e7b2f5e7a2139dfbd41d044a169a4b71.jpg" alt="" /></p>
+
+<p>2.然后选择程序右键&#45;--||-->完整转存</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/ea2ed726eee92277493da094eb448718.jpg" alt="" /></p>
+
+<p>3.打开ImpRec在下拉框中选中程序</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/a77f9c026d40e3c1b4f0b11565ad6078.jpg" alt="" /></p>
+
+<p>4.然后在OD中将下面箭头所指处复制下来</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/a02f920bd23b8bae14bcd475e666cf2a.jpg" alt="" /></p>
+
+<p>5.然后在下面OEP处填写刚才复制的&#45;--||-->点击自动查找TAT&#45;--||-->获取输入表&#45;--||-->点击无效函数,这里没有</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/3ef7f2235ed5395b00f6fd7baf4f2262.jpg" alt="" /></p>
+
+<p>(如果有,在输入表函数信息框内选中,然后删除指针!)</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/7e6371e0d18291db0c29629b4a175a77.jpg" alt="" /></p>
+
+<p>然后点击右下角的转储到文件!需要选中那个刚才使用LoadPE完整转存的文件名,然后就脱壳完成!!!</p>
+
+<h1>0x02 后续章节</h1>
+
+<hr />
+
+<p>以上很多注意的点是我刚学脱壳时遇到的一系列的问题,我希望大家不要再误入网上那些随意转载的文章的那些不明白的东西.下节教大家如何编写自动化脱壳插件.</p>
+
+<p>如果有什么不明白欢迎提问</p>      </p>
+    
+</body>
+</html>

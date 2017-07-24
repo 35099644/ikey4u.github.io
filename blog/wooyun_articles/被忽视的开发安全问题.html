@@ -1,0 +1,263 @@
+<html>
+<head>
+     <title>被忽视的开发安全问题 - winsyk</title>
+	 <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+</head>
+<body>
+<h1>URL:<a href="http://drops.wooyun.org/papers/4439">http://drops.wooyun.org/papers/4439</a></h1>
+
+      <p>
+        <h1>0x00 背景</h1>
+
+<hr />
+
+<p>本文是为了揭示那些被忽视的开发安全问题，主要针对基础设施部署环境基础解决方案包括(内部、外部、云环境)。</p>
+
+<h1>0x01 攻击面</h1>
+
+<hr />
+
+<p>github</p>
+
+<p>版本控制工具：</p>
+
+<p>持续集成工具：</p>
+
+<p>aws config files：</p>
+
+<p>客户端配置工具：</p>
+
+<p>elasticsearch:</p>
+
+<p>内存数据库：</p>
+
+<p>版本控制工具：</p>
+
+<!--more-->
+
+<h2>github信息泄漏：</h2>
+
+<hr />
+
+<p>github支持较为较为强大的搜索语法，通过这些搜索语法，通过github可以搜索到一些常规方法无法搜索的内容，如搜索内部项目、密码，ssh私钥等。 Conviso Research and Development Team编写了个较为详细的github语法搜索文章，可以通过http://blog.conviso.com.br/2013/06/github-hacking-for-fun-and-sensitive.html 查阅。 如搜索mysqldump 备份的sql文件，可使用extension:mysqldump sql来搜索。</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/07fecb52c06f6dbf2dc95e66be0b7345.jpg" alt="enter image description here" /></p>
+
+<p>另外还可以通过github来查找代码安全问题，如输入规则：extension:php mysql&#95;query $&#95;GET，可以搜索到大量包含mysql&#95;query $&#95;GET的请求，可以有针对性的进行代码审计。</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/c53b6342b7d358a90d903abe8df9a393.jpg" alt="enter image description here" /></p>
+
+<p>git 娱乐：</p>
+
+<p>github 是否能让我们冒充其他用户呢？让我们试下成为linus，通过邮件组收集下大神的邮箱信息。</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/202d34f2495ef669b4ba1925136bc6d8.jpg" alt="enter image description here" /></p>
+
+<p>通过github 可以搜索到linus的commit记录。</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/d93d99f7144c12aea55787022e210619.jpg" alt="enter image description here" /></p>
+
+<p>结果linus大神的commit记录出现在了我们的repo源。</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/a68ff6005b860ab10621acb7dcd37668.jpg" alt="enter image description here" /></p>
+
+<p>该问题后的总结，审计谁可以访问到你的repos，启用github双因素认证。</p>
+
+<h2>git配置不当：</h2>
+
+<hr />
+
+<p>如果.git文件夹可以被外网，攻击者可以通过.git下载所有的代码，当前前提是目录可被遍历，如果能遍历可以简单的获取到源代码。</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/80d5f01a0acbd9c55a516812b37f79cb.jpg" alt="enter image description here" /></p>
+
+<p>接着执行。</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/4d13fc0ce94b22663e5a75eb3e5530a3.jpg" alt="enter image description here" /></p>
+
+<p>通过在google中输入查询语句，*".git" intitle:"Index of”,可以找到几条记录。</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/fe129dadb6ae3b3e99ec8739ccf9529d.jpg" alt="enter image description here" /></p>
+
+<p>通过Google找到了一台配置错误的机器，看我们可以访问到.git目录</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/cfdf6f16d7750a7bb037803ddea06dcc.jpg" alt="enter image description here" /></p>
+
+<p>上边这些代码，都可以被我们下载到。如果目录没有开放遍历，可以检测.git/config</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/f3a053a86bac79a6c1d2ee89f16bfde6.jpg" alt="enter image description here" /></p>
+
+<p>使用dvcs-pillage or dvs-ripper 下载源代码，dvcs-pillage 也支持HG和GZR文件格式。 .git 泄漏你可以获取哪些东西呢，包括配置文件，源代码，开发者姓名、公钥、邮箱地址等，repo记录，漏洞漏洞删除的修复记录、密码、私钥等信息，wordpress配置文件，站点数据库备份在.git，会话密钥等。</p>
+
+<h2>svn配置不当：</h2>
+
+<hr />
+
+<p>在svn1.6之前的版本，通过访问.entries，可以下载到svn里的代码，比如案例： <a target="_blank" href="http://www.wooyun.org/bugs/wooyun-2014-067366">WooYun: 乐视某分站源码泄漏</a> </p>
+
+<p>在metasploit里有利用程序，对应的利用模块是：</p>
+
+<p>auxiliary/scanner/http/svn_scanner。</p>
+
+<p>在svn1.7之后的版本，通过访问.svn/wc.db，对应的metasploit模块也是有利用程序的，对应的modules是：</p>
+
+<p>auxiliary/scanner/http/svn&#95;wcdb&#95;scanner。</p>
+
+<h2>gitlist：</h2>
+
+<hr />
+
+<p>通过google 搜索关键字,powered by gitlist，可以看到可以搜索到的记录数为： 897,000 条结果。</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/9b3c94623d577f731d9c7bab73de9fb7.jpg" alt="enter image description here" /></p>
+
+<p>在gitlist 4.0及之前版本存在远程代码执行漏洞，漏洞CVE版本号为CVE-2014-4511，该漏洞利用方式为：””<code>whoami</code>，通过执行该命令可以导致gitlist出现知名错误。</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/3168db4ca35f3156acab4d799b99ecdd.jpg" alt="enter image description here" /></p>
+
+<p>在2014年6月29号的时候， 该文章对这个远程代码执行漏洞进行了详细讲解并且给出了漏洞利用代码。</p>
+
+<p>博客地址：http://hatriot.github.io/blog/2014/06/29/gitlist-rce/ 通过该利用程序可以将php木马写入到gitlist目录中，从而获取权限服务器</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/acde39f34fdfc069a2ccec7b12cde60f.jpg" alt="enter image description here" /></p>
+
+<p>利用代码：</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/56937ff9a476796915dae0625ed7edb9.jpg" alt="enter image description here" /></p>
+
+<p>利用方式：</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/bfa5252da9c4d6787ae65a152ebf7891.jpg" alt="enter image description here" /></p>
+
+<h2>持续集成工具：</h2>
+
+<p>hudson是jenkins的前身，是基于Java开发的一种持续集成工具，用于监控程序重复的工作，Jenkins是一个开源软件项目，旨在提供一个开放易用的软件平台，使持续集成变成可能。</p>
+
+<p>通过Google Hacking方法，讲hundon输入到shodan中进行搜索，可以发现大量使用hundon的服务器如,hundson搜索结果。</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/7cf8e10c9ac20abfba985d7b99694acd.jpg" alt="enter image description here" /></p>
+
+<p>jenkins搜索结果。</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/4e8be7a8152a271d21c352f93a50af83.jpg" alt="enter image description here" /></p>
+
+<p>在Jenkins如果缺少认证，可以访问/view/ALL/newJob来新建一个build然后执行恶意代码如下图：</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/3d0f5618b5da8ca79a6c326f1585e019.jpg" alt="enter image description here" /></p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/37b6dad9e2cd3003ee0ef76bbac6d3c3.jpg" alt="enter image description here" /></p>
+
+<p>另外也可以使用metasploit来进行渗透测试。</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/6a38eaabae946b71ba6e23e42190478f.jpg" alt="enter image description here" /></p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/2911cf5e0e9d2fb1785d228aa18097c4.jpg" alt="enter image description here" /></p>
+
+<p>通过metasploit来进行利用，可以获取目标服务器权限。</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/46c4e268a1cf5bfd144fadf01f6afd45.jpg" alt="enter image description here" /></p>
+
+<p>参考：https://www.pentestgeek.com/2014/06/13/hacking-jenkins-servers-with-no-password/ 把邪恶的东西放在/vagrant/.git/hooks/post-commit并等待用户提交一些代码，从用户挂载/vagrant目录开始，钩子就一直在运行，即使用户销毁了VM。</p>
+
+<h2>kickstart files:</h2>
+
+<hr />
+
+<p>在kickstart中有3种办法重置用户密码，1、安装过程中 2、在kickstart文件加密的哈希" rootpw --iscrypted" 3、在kickstart文件明文" rootpw --plaintext"</p>
+
+<p>举个例子</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/b6585c822ced218eabe8bb928e7b2b5a.jpg" alt="enter image description here" /></p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/af2448c192e51137d772479913373b5d.jpg" alt="enter image description here" /></p>
+
+<p>aws config files：</p>
+
+<p>AWS 命令行界面 (CLI) 是用于管理 AWS 服务的统一工具。只通过一个工具进行下载和配置，您可以使用命令行控制多个 AWS 服务并利用脚本来自动执行这些服务。</p>
+
+<p>aws使用aws商店以明文存储hiddle申请，这是典型的特权访问。</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/86d1321a0adc3105b60ef70191245142.jpg" alt="enter image description here" /></p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/41db7ec8c453ab20927084d7197db8fa.jpg" alt="enter image description here" /></p>
+
+<p>客户端配置工具：</p>
+
+<p>Chef是由Ruby与Erlang写成的配置管理软件，它以一种纯Ruby的领域专用语言（DSL）保存系统配置“食谱（recipes）”或“做饭书（cookbooks）”。</p>
+
+<p>Chef由Opscode公司开发，并在Apache协议版本2.0下开源发布。Chef可在主从式架构之下运行，亦可在名为“chef-solo”的集成配置之下运行。</p>
+
+<p>通过shodanhq来搜索下“chef server" 可以找到较多运行该服务的服务器。</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/f5bba3563c516a54af2a3c58364e47e7.jpg" alt="enter image description here" /></p>
+
+<p>通过查看chef上可以看到登录的帐号密码，即可完成登录，可以看到较多敏感信息！所以一定要记得修改默认密码。</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/3376c46ec6331e4badf7a71be845ba51.jpg" alt="enter image description here" /></p>
+
+<p>knife 是一个chef命令行实用工具，可以加密及存储数据包凭证，使用方法例如：</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/451c67a7e88960000316cd6d0703083a.jpg" alt="enter image description here" /></p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/333dd7bee2ba8db07ab8f7a53178688b.jpg" alt="enter image description here" /></p>
+
+<p>chef/knife 加密数据包：</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/9589cc82151a9e9f98804e3d9089cde1.jpg" alt="enter image description here" /></p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/a3a091b9a0543d3f71a70d7bd195f0e4.jpg" alt="enter image description here" /></p>
+
+<p>Vagrant：</p>
+
+<p>你知道如何修改你的ssh keys吗？Vagrant有默认证书，并且sudo不需要密码，可以使用metasploit来扫描默认key，如图：</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/615f5b828db10c915ed3ab5db7c183e8.jpg" alt="enter image description here" /></p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/051a07a19f789d90657478609f940abe.jpg" alt="enter image description here" /></p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/1ac720eaed69ac2c656c4a3eef6d9d78.jpg" alt="enter image description here" /></p>
+
+<p>elasticsearch：</p>
+
+<p>elasticSearch是一个基于Lucene构建的开源，分布式，RESTful搜索引擎。设计用于云计算中，能够达到实时搜索，稳定，可靠，快速，安装使用方便。</p>
+
+<p>elasticsearch 本身没有访问控制，任何通过http api搜索es中存储的结果，可以用put请求来update存储结果。elasticsearch早与1.2.0版本中存在远程代码执行漏洞，cve版本号为：CVE-2014-3120</p>
+
+<p>elasticsearch启动默认端口为9200,可以看到集群版本信息如图：</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/009fe879db24b4df3e8dae22e0184472.jpg" alt="enter image description here" /></p>
+
+<p>使用metasploit溢出存在漏洞的集群，成功获取权限。</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/858e0b874b612c82af910c42fc579d1c.jpg" alt="enter image description here" /></p>
+
+<p>内存数据库：</p>
+
+<p>redis是一个key-value存储系统。和Memcached类似，它支持存储的value类型相对更多，包括string(字符串)、list(链表)、set(集合)、zset(sorted set --有序集合)和hash（哈希类型）</p>
+
+<p>redis没有加密方式，监听6379 tcp端口，默认redis如果没有指向监听内网地址，而对外开放，外网攻击者可以直接访问该数据库。</p>
+
+<p>通过shodan来搜索redis:6379 关键字，可以获取大量redis信息：</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/21bcb0eb5a486cbd68853d3dd1e1dc93.jpg" alt="enter image description here" /></p>
+
+<p>随机找一条，可以正常登录，redis-cli 可以指向需要连接的redis ip地址。</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/510a76025281d2e7cd33a1d1453f3a91.jpg" alt="enter image description here" /></p>
+
+<p>memcache：</p>
+
+<p>memcache 是一种分布式缓存服务器，和通常使用的非分布式的ecache不同，memcache需要独立的服务器支撑，客户端通过配置IP地址和端口号（默认11211）与之连接并使用API进行数据的缓存操作。</p>
+
+<p>memcached未作IP限制导致缓存数据可被攻击者控制，可被攻击者控制，通过连接上后可获取敏感信息，如图：</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/6213ca2ab4087400811b896e8aa63610.jpg" alt="enter image description here" /></p>
+
+<h1>0x03 结语</h1>
+
+<hr />
+
+<p>通过这些案例，让我们知道，其实安全问题不止来源于web问题，安全问题更来自于运维安全，运维和运维安全的好弱是衡量一个公司安全的基础！</p>      </p>
+    
+</body>
+</html>

@@ -1,0 +1,12 @@
+69c69
+<                 \ 'pdflatex -shell-escape -interaction=nonstopmode -output-directory=' .
+---
+>                 \ 'xelatex -parse-first-line  -shell-escape -interaction=nonstopmode -output-directory=' .
+102c102
+<     silent call system('pdflatex -shell-escape -interaction=nonstopmode -output-directory=' .
+---
+>     silent call system('xelatex -parse-first-line -shell-escape -interaction=nonstopmode -output-directory=' .
+124c124
+<                     \ 'pdflatex -shell-escape -interaction=nonstopmode -output-directory=' .
+---
+>                     \ 'xelatex -parse-first-line -shell-escape -interaction=nonstopmode -output-directory=' .

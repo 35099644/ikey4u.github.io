@@ -1,0 +1,114 @@
+<html>
+<head>
+     <title>Android sqlite load_extension漏洞解析 - 路人甲</title>
+	 <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+</head>
+<body>
+<h1>URL:<a href="http://drops.wooyun.org/mobile/9247">http://drops.wooyun.org/mobile/9247</a></h1>
+
+      <p>
+        <h1>0x01 sqlite load_extension</h1>
+
+<hr />
+
+<p>SQLite从3.3.6版本（<code>http://www.sqlite.org/cgi/src/artifact/71405a8f9fedc0c2</code>）开始提供了支持扩展的能力，通过sqlite&#95;load&#95;extension API（或者load_extensionSQL语句），开发者可以在不改动SQLite源码的情况下，通过动态加载的库（so/dll/dylib）来扩展SQLite的能力。</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/67cf7566274a0cb17ebbc90d2fd93159.jpg" alt="" /></p>
+
+<p>便利的功能总是最先被黑客利用来实施攻击。借助SQLite动态加载的这个特性，我们仅需要在可以预测的存储路径中预先放置一个覆盖SQLite扩展规范的动态库（Android平台的so库），然后通过SQL注入漏洞调用load&#95;extension，就可以很轻松的激活这个库中的代码，直接形成了远程代码执行漏洞。国外黑客早就提出使用load&#95;extension和sql注入漏洞来进行远程代码执行攻击的方法，如下图。</p>
+
+<!--more-->
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/0b1ae62496b9fb9e09bfd676b3029ffe.jpg" alt="" /></p>
+
+<p>也许是SQLite官方也意识到了load&#95;extension API的能力过于强大，在放出load&#95;extension功能后仅20天，就在代码中（http://www.sqlite.org/cgi/src/info/4692319ccf28b0eb）将load&#95;extension的功能设置为默认关闭，需要在代码中通过sqlite3&#95;enable&#95;load&#95;extensionAPI显式打开后方可使用，而此API无法在SQL语句中调用，断绝了利用SQL注入打开的可能性。</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/2ff83ca2584933f73c37c08ffa9acd9d.jpg" alt="" /></p>
+
+<h1>0x02 Android平台下的sqlite load_extension支持</h1>
+
+<hr />
+
+<p>出于功能和优化的原因，Google从 Android 4.1.2开始通过预编译宏SQLITE&#95;OMIT&#95;LOAD_EXTENSION，从代码上直接移除了SQLite动态加载扩展的能力,如下图。</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/cc5ab4e1c49bd0d8c9e141bbca8e123b.jpg" alt="" /></p>
+
+<p>可以通过adb shell来判断Android系统是不是默认支持load_extension，下图为Android4.0.3下sqlite3的.help命令：</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/a73ac8e74357cd9dfac1da3ba2fc37ec.jpg" alt="" /></p>
+
+<p>可以看出支持load extension，而Android4.1.2上则没有该选项。</p>
+
+<h1>0x03 Android平台下的sqlite extension模块编译</h1>
+
+<hr />
+
+<p>sqlite extension必须包含sqlite3ext.h头文件，实现一个sqlite3&#95;extension&#95;init 入口。下图为一个sqlite extension的基本框架：</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/b89b2b465cb90802247ecad811089619.jpg" alt="" /></p>
+
+<p>接着是Android.mk文件，如下图：</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/4002dca42572f76f5692719b7853a634.jpg" alt="" /></p>
+
+<p>我们实现一个加载时打印log输出的一个sqlie extension：</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/483e8980793f038cd96162a7ac7d2f23.jpg" alt="" /></p>
+
+<h1>0x04 Android平台下sqlite load_extension实战</h1>
+
+<hr />
+
+<p>由于sqlite是未加密的数据库，会导致数据泄露的风险，Android App都开始使用第三方透明加密数据库组件，比如sqlcipher。由于sqlcipher编译时没移除load extension，如图，导致使用它的App存在被远程代码执行攻击的风险。</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/41c604bacf881ac3e211a71dc0fb5540.jpg" alt="" /></p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/e88756c165a6d5786f037122fe0be5f6.jpg" alt="" /></p>
+
+<p>下面我们将通过一个简单的demo来展示sql注入配合load_extension的漏洞利用。</p>
+
+<p>首先，实现一个使用sqlcipher的Android程序，下载sqlcipher包，将库文件导入项目，如下图：</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/61ffa2f35255f4be6afceee39f9eaa21.jpg" alt="" /></p>
+
+<p>将导入包换成sqlcipher的：</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/a0044e929a7e46b3eb1aed4391e7331e.jpg" alt="" /></p>
+
+<p>加载sqlcihper的库文件，并且打开数据库时提供密钥：</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/3a227861b277b1ec23df4f0f79150260.jpg" alt="" /></p>
+
+<p>编译的时候如果出错，则将jar包引入并导出，如下图：</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/4f864035c621588f1fb2179f591b5814.jpg" alt="" /></p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/0fb193fc1db489f003e44f64f24c31c9.jpg" alt="" /></p>
+
+<p>实现一个存在sql注入的数据库查询语句，外部可控，如下图：</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/94e9bc2b2147816b45120955e4728343.jpg" alt="" /></p>
+
+<p><strong>该函数接收一个外部可控的参数，并将数据库查询语句进行拼接，导致可被外部植入恶意代码进行</strong>代码执行攻击，如下图：</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/404b65f4159c04311994c690a10273c1.jpg" alt="" /></p>
+
+<p>执行之后，可以看到so加载成功，如下图：</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/7355c6d57172a12ccacfacda6acdfd2f.jpg" alt="" /></p>
+
+<h1>0x05 Android平台下sqlite load_extension攻防</h1>
+
+<hr />
+
+<p><strong>攻击场景：</strong>存在漏洞的app可以接收文件，黑客可将文件通过目录遍历漏洞放到app私有目录下，再通过发消息触发sql注入语句，完美的远程代码执行攻击。</p>
+
+<p><strong>漏洞防御：</strong></p>
+
+<ol>
+<li>由于sqlcipher的扩展默认是开启的，如果需要sqlcipher，编译sqlcipher的时候通过SQLITE&#95;OMIT&#95;LOAD_EXTENSION宏来关闭sqlcipher的扩展功能。</li>
+<li>进行数据库操作时，禁止将查询语句进行拼接，防止存在sql注入漏洞。</li>
+</ol>      </p>
+    
+</body>
+</html>

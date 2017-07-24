@@ -1,0 +1,355 @@
+<html>
+<head>
+     <title>警惕 云控广告“游戏盒子”死灰复燃 - 360安全卫士</title>
+	 <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+</head>
+<body>
+<h1>URL:<a href="http://drops.wooyun.org/papers/9681">http://drops.wooyun.org/papers/9681</a></h1>
+
+      <p>
+        <p>近日,360互联网安全中心拦截了大量可疑流氓推广样本,这些样本伪装成游戏盒子,安装后接收云端指令,会强制下载推广软件,弹窗,修改主页,通过用户的电脑赚取大量的利益,本文将对此样本详细分析.</p>
+
+<h1>0x00 概述</h1>
+
+<hr />
+
+<p>该木马通过下载站捆绑传播,安装后潜伏25分钟,25分钟后向服务器发送机器信息(系统版本,软件版本号等),收到指令后下载推广软件和刷流量软件,系统重启后静默安装同时启动刷流量的软件,占用系统大量资源和流量.总感染量达数千万.</p>
+
+<h1>0x01 样本信息</h1>
+
+<hr />
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/83bba43f4531ba5103fa827bdeb887d2.jpg" alt="" /></p>
+
+<!--more-->
+
+<p>图 1 安装包</p>
+
+<p>Setup11009.exe</p>
+
+<p>文件大小: 362752 字节</p>
+
+<p>MD5 e20ecf2a617ae0a063b49668a64577ec</p>
+
+<p>安装包和程序都使用同一个签名</p>
+
+<h1>0x02 行为分析</h1>
+
+<hr />
+
+<p>1) 安装后目录结构:</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/bfd4aada29dc8bd6950b62094bc1b4f2.jpg" alt="" /></p>
+
+<p>图 2 目录结构</p>
+
+<p>2) 程序列表中:</p>
+
+<p>程序名为 <code>gmbox Redistributable Package(kb20140526)</code> ,伪装成Windows补丁包程序</p>
+
+<p>时间为真实安装时间的一年前</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/59880c910dda832fbe7a6572abc1b822.jpg" alt="" /></p>
+
+<p>图 3 控制面板-卸载程序-显示</p>
+
+<p>3) 开始菜单显示为 GXBox游戏</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/42b11362baf60a9ea0b19b7a9400c1fb.jpg" alt="" /></p>
+
+<p>图 4 开始菜单</p>
+
+<p>4) 托盘显示图标</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/67803e9544f54149899aa7b0c9843444.jpg" alt="" /></p>
+
+<p>图 5 托盘图标</p>
+
+<p>5) 打开后,伪装成游戏广告</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/9ba6278035dab5121921aad93d328dc8.jpg" alt="" /></p>
+
+<p>图 6 主界面</p>
+
+<p>6) 添加服务,名称为GmXbox_update, dll路径指向安装目录下的gmbox.dll</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/a357fec2258e0865a9aee4da20c00ea9.jpg" alt="" /></p>
+
+<p>图 7 服务名称</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/dee7884929699ee5ac0ef598c1e46dfa.jpg" alt="" /></p>
+
+<p>图 8 服务DLL路径</p>
+
+<p>7) 在<code>HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run</code>添加启动项,参数为 -tray,每次启动不显示主界面,只有托盘图标</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/475c0f26e3573babef5075ec44c59038.jpg" alt="" /></p>
+
+<p>图 9 启动项</p>
+
+<p>8) 安装后25分钟,在临时目录下载了数个广告软件和安装程序</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/bcdcc42d45f6c4f8128c0aaff56f62f2.jpg" alt="" /></p>
+
+<p>图 10 下载安装包</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/d34666791f72df2563f285ddcef65ed7.jpg" alt="" /></p>
+
+<p>图 11 临时目录中下载的安装包</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/a54001046127a9e60bd559b8dcec66bc.jpg" alt="" /></p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/812e9db0e378f0c88b80cee1c58337a1.jpg" alt="" /></p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/d20f4a771c8ebe4693bfc7392ce484c4.jpg" alt="" /></p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/698cd4518e2d3e7ce4172d790ce19c89.jpg" alt="" /></p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/f6b891aac4f749801159cf528a741898.jpg" alt="" /></p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/48bc65e0a03b830bcbcd9e7aaf5a8ac1.jpg" alt="" /></p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/3a88d3bf7c0d86905cf4e84709e78c03.jpg" alt="" /></p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/46a9bc4e34b382ca4dae134f183125e5.jpg" alt="" /></p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/7bb294ff2c6c812b079c75fce58a176e.jpg" alt="" /></p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/df45a0a092560d0609350ad6baa622fb.jpg" alt="" /></p>
+
+<p>其中</p>
+
+<ol>
+<li>ir56.exe 调用下载的广告程序安装包.</li>
+<li>hw.dat 遍历安装程序,使其窗口隐藏.</li>
+<li>ck.dat 刷网站流量.</li>
+</ol>
+
+<p>这3个程序的PE头被修改,防止被杀软查杀.</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/24990443ba7915cd8b12c07d29a88121.jpg" alt="" /></p>
+
+<p>图 12 修改后的PE头</p>
+
+<p>其他为广告软件安装程序.</p>
+
+<p>系统重启后,广告程序全部都静默安装</p>
+
+<h1>0x03 技术细节</h1>
+
+<hr />
+
+<h2>1) 安装过程：</h2>
+
+<h3>A) 安装包使用NSIS打包</h3>
+
+<p>首先,禁用常用程序的快速启动任务栏显示，为后面安装软件留位置</p>
+
+<pre><code>WriteRegStr HKCR Applications\$_gmbox_.exe NoStartPage ""
+WriteRegStr HKCR Applications\uninstall.exe NoStartPage ""
+WriteRegStr HKCR Applications\uninstall.exe NoStartPage ""
+WriteRegStr HKCR Applications\rsmain.exe NoStartPage ""
+WriteRegStr HKCR Applications\360sd.exe NoStartPage ""
+WriteRegStr HKCR Applications\rsagent.exe NoStartPage ""
+WriteRegStr HKCR Applications\360safe.exe NoStartPage ""
+WriteRegStr HKCR Applications\rsmctray.exe NoStartPage ""
+WriteRegStr HKCR Applications\kav.exe NoStartPage ""
+WriteRegStr HKCR Applications\rsstub.exe NoStartPage ""
+WriteRegStr HKCR Applications\SHPlayer.exe NoStartPage ""
+WriteRegStr HKCR Applications\wandoujia.exe NoStartPage ""
+WriteRegStr HKCR Applications\wandoujia2.exe NoStartPage ""
+WriteRegStr HKCR Applications\Uninst.exe NoStartPage ""
+</code></pre>
+
+<h3>B) 删除桌面和IE中的网址导航快捷方式</h3>
+
+<pre><code>Delete $DESKTOP\*123*.lnk
+Delete $DESKTOP\*123*.url
+Delete $DESKTOP\*Int*.lnk
+Delete $DESKTOP\*Int*.url
+Delete $DESKTOP\*1nt*.lnk
+Delete $DESKTOP\*1nt*.url
+Delete $DESKTOP\*网址*.lnk
+Delete $DESKTOP\*网址*.url
+Delete $DESKTOP\*导航*.lnk
+Delete $DESKTOP\*导航*.url    
+
+Delete "$APPDATA\Microsoft\Internet Explorer\Quick Launch\*123*.lnk"
+Delete "$APPDATA\Microsoft\Internet Explorer\Quick Launch\*123*.url"
+Delete "$APPDATA\Microsoft\Internet Explorer\Quick Launch\*Int*.lnk"
+Delete "$APPDATA\Microsoft\Internet Explorer\Quick Launch\*Int*.url"
+Delete "$APPDATA\Microsoft\Internet Explorer\Quick Launch\*1nt*.lnk"
+Delete "$APPDATA\Microsoft\Internet Explorer\Quick Launch\*1nt*.url"
+Delete "$APPDATA\Microsoft\Internet Explorer\Quick Launch\*网址*.lnk"
+Delete "$APPDATA\Microsoft\Internet Explorer\Quick Launch\*网址*.url"
+Delete "$APPDATA\Microsoft\Internet Explorer\Quick Launch\*导航*.lnk"
+Delete "$APPDATA\Microsoft\Internet Explorer\Quick Launch\*导航*.url"
+Delete $INSTDIR\ad.dat
+</code></pre>
+
+<h3>C) 调用gmbox.dll的Install函数,安装服务</h3>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/8cf2ed256fb818a2e3dde1a525ff3406.jpg" alt="" /></p>
+
+<p>图 13 安装脚本-调用gmbox.dll Install函数</p>
+
+<h3>D) 修改安装时间为当前时间的前1年.</h3>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/8c1cb1ecbbeb835b217f59dc64a5b600.jpg" alt="" /></p>
+
+<p>图 14 安装脚本-修改安装时间</p>
+
+<h2>2) 主程序 gmbox.exe</h2>
+
+<h3>A) 发送客户信息数据包: 内容包括PID(用于识别客户端),推广渠道ID,版本号,当前时间</h3>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/ba473fd244235f96cb3ff4d8cdb6d7d1.jpg" alt="" /></p>
+
+<p>图 15 数据包</p>
+
+<h3>B) 加密后Post到 <code>http://sj.go2050.com/rcsj.ashx</code></h3>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/72671707497ac99d97e7145442044aac.jpg" alt="" /></p>
+
+<p>图 16 post数据</p>
+
+<h3>C) 注册云控命令处理函数,可以看到有获取操作系统版本,执行任务,打开URL,执行云控命令,读取注册表,获取和设置主页等功能.</h3>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/8a7d027edab1e25312c08e6376e55e9a.jpg" alt="" /></p>
+
+<p>图 17 注册云控命令相应函数</p>
+
+<h3>D) 其中doTask1函数中接收到URL然后下载文件到临时目录</h3>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/72e668089aee6095b133c9affe960ace.jpg" alt="" /></p>
+
+<p>图 18 下载广告软件</p>
+
+<h3>E) 获取广告软件指令单,id=11009猜测可能是渠道号</h3>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/87c4b71a147d640a4298aa7e7961190e.jpg" alt="" /></p>
+
+<p>图 19 获取指令单</p>
+
+<p>其中带有-kboxsvc标记的(即ir56.exe)是安装软件.</p>
+
+<h3>F) 下载完成后把ir56.exe路径加密后, 添加到gmbox安装目录下的gmbox.ini文件nrd字段</h3>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/7124192d2d667efe074ba0d62d96485b.jpg" alt="" /></p>
+
+<p>图 20 加密后的ir56.exe路径</p>
+
+<h2>3) 服务程序 gmbox.dll</h2>
+
+<h3>A) SERVICE&#95;CONTROL&#95;SHUTDOWN事件响应函数:</h3>
+
+<p>当系统关机时,函数执行,读取gmbox.ini中的nrd字段,即安装程序ir56.exe的路径,解密后设置RunOnce启动项.</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/57641c7a2fd9a33312ec94aa86966e72.jpg" alt="" /></p>
+
+<p>图 21 设置ir56.exe启动项</p>
+
+<h3>B) 遍历下载的文件,判断PE文件标志,如果是修改过的exe,则恢复MZ和PE标记</h3>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/02fe8a32e12ec84d27a8c7ceefce6160.jpg" alt="" /></p>
+
+<p>图 22 还原PE文件</p>
+
+<h3>C) 添加启动项,不显示主界面,只有托盘图标</h3>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/2b1476a0537d1e6306e8d730b7f559eb.jpg" alt="" /></p>
+
+<p>图 23 添加gmbox.exe启动项</p>
+
+<h3>D) 添加系统服务</h3>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/c6d6f0be04516f871c731ce8c92f66d1.jpg" alt="" /></p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/db82a65c32e3de304fec9d92dbe4ae9d.jpg" alt="" /></p>
+
+<p>图 24 创建gmbox update服务</p>
+
+<h3>E) 判断是否有调试进程,没有则以 -g参数启动gmbox.exe,自动升级程序.</h3>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/08df2740e1034492d526f528793e10b0.jpg" alt="" /></p>
+
+<p>图 25 遍历检测是否有指定进程</p>
+
+<h3>F) 加密后的检测进程名称列表</h3>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/c812cebac9feed8c69b60d9fd370cf68.jpg" alt="" /></p>
+
+<p>图 26 加密后的进程名称</p>
+
+<h3>G) dll还可以向指定网站通过SOAP协议获取捆绑软件的数据,弹窗数据,统计活跃数据,采集主机的信息.记录安装和卸载的数据等</h3>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/c14b443c6544bd824482137d32de43c5.jpg" alt="" /></p>
+
+<p>图 27 调用采集接口</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/30b51cdfd4d7ffc405b413b9a7f7552f.jpg" alt="" /></p>
+
+<p>图 28 获取和采集数据接口说明</p>
+
+<h1>0x04 意外发现</h1>
+
+<hr />
+
+<p>在软件获取最新版本号的地址 <code>http://dh.go2050.com/download/version.xml</code> 的上层目录中我们发现了anote(多彩便签)的安装包,下载后分析判定和gmbox高度相似.</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/a063cc83c1ef230fe8a4c07d4e6c928c.jpg" alt="" /></p>
+
+<p>图 29 anote安装包下载</p>
+
+<h2>1) 注册云控命令处理函数</h2>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/6bf9b8c3e392b1238e44e38d58d4e7fa.jpg" alt="" /></p>
+
+<p>图 30 gmbox注册云控命令处理函数</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/884c08c26d3dd95b3c9dd2158edbae6d.jpg" alt="" /></p>
+
+<p>图 31 anote注册云控命令处理函数</p>
+
+<h2>2) 字符串加密函数</h2>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/46e5cf4d4c3ceb06370995ac7e4890cd.jpg" alt="" /></p>
+
+<p>图 32 gmbox.dll 字符串加密函数</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/b99b59d02f43112c2b0af9e8aebca9a3.jpg" alt="" /></p>
+
+<p>图 33 anote.dll 字符串加密函数</p>
+
+<h2>3) 加密的字符串表</h2>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/8c7832086dd2a8fefd7ca21f5162d208.jpg" alt="" /></p>
+
+<p>图 34 gmbox.dll 加密的字符串表</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/df9eb273e6f9f28b90b3e2f475936f00.jpg" alt="" /></p>
+
+<p>图 35 anote.dll 加密的字符串表</p>
+
+<p>这个字符串列表被_UnInstall函数引用,用于判断是用户手动卸载还是第三方管理软件卸载,并把结果发送到服务器做统计.</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/502fe00255d6ccb2ba9cb37ce30a57c9.jpg" alt="" /></p>
+
+<p>图 36 判断是否是用户手动卸载</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/bfa186ac0e0198fe8f7a4a84e545d59b.jpg" alt="" /></p>
+
+<p>图 37 构建发送字符串</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/8c3f94c802da11b9e18448c7c530a87a.jpg" alt="" /></p>
+
+<p>图 38 发送统计数据</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/ae16f199cf88cc998022863561b29695.jpg" alt="" /></p>
+
+<p>图 39 安装拦截</p>
+
+<p><strong>总结: 通过分析我们发现,该木马添加了系统服务,启动后过一段时间才触发行为,下载的安装程序去除了PE特征,以此逃过杀软扫描,系统关机时恢复PE文件,重启后安装推广软件,潜伏性、隐蔽性较强,中招之后较难发现,建议用户安装专业的安全软件,养成良好的上网习惯,从正规下载网站或者软件管家下载软件,不要运行来历不明的软件.安装软件时注意取消默认勾选的捆绑软件.</strong></p>      </p>
+    
+</body>
+</html>

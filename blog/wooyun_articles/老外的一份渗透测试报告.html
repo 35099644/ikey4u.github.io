@@ -1,0 +1,223 @@
+<html>
+<head>
+     <title>老外的一份渗透测试报告 - 瞌睡龙</title>
+	 <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+</head>
+<body>
+<h1>URL:<a href="http://drops.wooyun.org/papers/576">http://drops.wooyun.org/papers/576</a></h1>
+
+      <p>
+        <p>From:<a href="http://www.offensive-security.com/reports/penetration-testing-sample-report-2013.pdf">penetration-testing-sample-report-2013.pdf</a></p>
+
+<p>offensive security出的一份渗透测试报告，翻译了下重点内容 :)</p>
+
+<p>过程还是很精彩的~</p>
+
+<p>本次测试的域名为：megacorpone.com</p>
+
+<p>先查看一下其DNS服务器：</p>
+
+<!--more-->
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/7ab194394321888efc6eba089a9736af.jpg" alt="enter image description here" /></p>
+
+<p>然后发现 ns2.megacorpone.com 存在域传送漏洞。</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/44d1346cae3beb5aa2195cc9795e0b4c.jpg" alt="enter image description here" /></p>
+
+<p>关于域传送的漏洞，可以参考这里<a href="http://drops.wooyun.org/papers/64">http://drops.wooyun.org/papers/64</a></p>
+
+<p>从图片中可以看出域名都在50.7.67.x的IP段内，网络拓扑图：</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/a9cb29eb16defc919453cf53804a1d18.jpg" alt="enter image description here" /></p>
+
+<p>在admin.megacorpone.com服务器的81端口发现了apache的webserver，然后扫一下文件路径：</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/ce701a337b54a0b31513a07fd0f6ccd5.jpg" alt="enter image description here" /></p>
+
+<p>可以看到/admin是一个需要身份验证的路径。</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/01f142cc1a8f7bd31357e5ce75ac15ca.jpg" alt="enter image description here" /></p>
+
+<p>根据www.megacorpone.com网站内容做了一个字典，爆破密码，用户名就用admin了。</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/44699364ebe82805d7237e85cdd5ae0b.jpg" alt="enter image description here" /></p>
+
+<p>破解出密码为：nanotechnology1</p>
+
+<p>进入后界面：</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/237c07b987245765b4a787c5396e6d81.jpg" alt="enter image description here" /></p>
+
+<p>可以看到是一套phpSQLiteCMS，管理SQLite数据的：</p>
+
+<p>通过此页面可以直接查询用户名和密码的hash：</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/050052a114d14b25d285aa3b3b374019.jpg" alt="enter image description here" /></p>
+
+<p>测试发现保存的hash并非常规的方式，于是下载一份phpselitecms观察其中的hash方式：</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/c4f35227107d08b0f41c28f714f8dfc1.jpg" alt="enter image description here" /></p>
+
+<p>知道了hash的方式是使用使用了一个10位字符的salt一起做sha1，并且字符串拼接原始salt一起放在数据库中。</p>
+
+<p>我们采用同样的hash方式来暴力碰撞密码，尝试破解其他账户，又破解出两个来，收集密码的好处是可能其他系统也会使用相同的用户名密码，这样就可以轻松的进入了。</p>
+
+<p>SQLite Manager软件存在一个已公开的代码注入漏洞，可以使用exp直接打：</p>
+
+<p><a href="http://www.exploit-db.com/exploits/24320/">http://www.exploit-db.com/exploits/24320/</a></p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/b5faf498dfe067eb527f0079ed92fa5d.jpg" alt="enter image description here" /></p>
+
+<p>反弹回shell：</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/40b1635dddddaec87e60a65bc3965e4d.jpg" alt="enter image description here" /></p>
+
+<p>服务器拓扑：</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/fdb7c75cce003bb0ac8feef72f57735d.jpg" alt="enter image description here" /></p>
+
+<p>同时发现服务器可以提权，利用exp提权：</p>
+
+<p><a href="http://www.exploit-db.com/exploits/18411/">http://www.exploit-db.com/exploits/18411/</a></p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/060b9a618c083a6aff8bad4d35b6b518.jpg" alt="enter image description here" /></p>
+
+<p>此时已经完全控制此台服务器。</p>
+
+<p>然后好好的分析了一下此台服务器，查看到web目录下java应用只允许一个网段来访问。</p>
+
+<p>后来发现这个管理员网络之一：</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/0a3f45667af7cc4570517e03a4a82838.jpg" alt="enter image description here" /></p>
+
+<p>我们在web客户端增加了一个Java小程序，可以直接控制远程客户端。</p>
+
+<p>（PS：出了这么多Java 0day不知道直接挂到页面上，老外的中马率怎么样）</p>
+
+<p>在管理员下载并允许后：</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/bda65448619d07ad7425185dfb76ba16.jpg" alt="enter image description here" /></p>
+
+<p>此时网络拓扑：</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/d3c07cf5cad56a72e84314a75c6ed3dc.jpg" alt="enter image description here" /></p>
+
+<p>发现管理员的电脑在域中，开始提升到域管理员。</p>
+
+<p>发现系统中有一个组管理文件。</p>
+
+<p>（ps：关于这个专门去查了一下是2008域管理存在的一个问题：<a href="http://www.carnal0wnage.com/papers/LARES-GPP.pdf">http://www.carnal0wnage.com/papers/LARES-GPP.pdf</a>）</p>
+
+<p>metasploit上有rb脚本可以查找xml文件并解密：<a href="https://github.com/rapid7/metasploit-framework/blob/master/modules/post/windows/gather/credentials/gpp.rb">https://github.com/rapid7/metasploit-framework/blob/master/modules/post/windows/gather/credentials/gpp.rb</a></p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/8cd8c4e051dea150212e0cd861fdefd5.jpg" alt="enter image description here" /></p>
+
+<p>查看groups.xml文件：</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/944d1f571ed2248052cb67b2d7cdd296.jpg" alt="enter image description here" /></p>
+
+<p>解密：</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/21a8ed052fa97aceacc024060b60e017.jpg" alt="enter image description here" /></p>
+
+<p>解密的ruby脚本贴出来：</p>
+
+<p>使用方法是：</p>
+
+<pre><code>#ruby decrypt.rb 密文
+</code></pre>
+
+<p><br></p>
+
+<pre><code>#!ruby
+require 'rubygems'
+require 'openssl'
+require 'base64'
+
+#encrypted_data = "AzVJmXh/J9KrU5n0czX1uBPLSUjzFE8j7dOltPD8tLk"
+
+encrypted_data = ARGV
+
+def decrypt(encrypted_data)
+  padding = "=" * (4 - (encrypted_data.length % 4))
+  epassword = "#{encrypted_data}#{padding}"
+  decoded = Base64.decode64(epassword)
+
+   key = "\x4e\x99\x06\xe8\xfc\xb6\x6c\xc9\xfa\xf4\x93\x10\x62\x0f\xfe\xe8\xf4\x96\xe8\x06\xcc\x05\x79\x90\x20\x9b\x09\xa4\x33\xb6\x6c\x1b"
+  aes = OpenSSL::Cipher::Cipher.new("AES-256-CBC")
+  aes.decrypt
+  aes.key = key
+  plaintext = aes.update(decoded)
+  plaintext &lt;&lt; aes.final
+  pass = plaintext.unpack('v*').pack('C*') # UNICODE conversion
+
+   return pass
+ end
+
+blah = decrypt(encrypted_data)
+puts blah 
+</code></pre>
+
+<p>尝试用plink端口转发，把内网的远程桌面连接转发出来，但是被阻断了：</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/6548ba0f983b62ea8c6e8fe4a621d963.jpg" alt="enter image description here" /></p>
+
+<p>测试后发现可以通过HTTP-Tunnel转发出来：</p>
+
+<p><a href="http://http-tunnel.sourceforge.net/">http://http-tunnel.sourceforge.net/</a></p>
+
+<p>登陆的用户名密码采用的是SQLite Manager应用中的mike用户。</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/36b8fd1dbccf7de19bcaba3b474cd943.jpg" alt="enter image description here" /></p>
+
+<p>此时网络拓扑图：</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/9e64bab89c4963abf74af5fda12350e7.jpg" alt="enter image description here" /></p>
+
+<p>打开IE的默认主页发现了Citrix服务器，用跟远程连接相同的用户名和密码进入：</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/3bab7cf9b17d7ca6c6f5b16dbff721bb.jpg" alt="enter image description here" /></p>
+
+<p>Citrix环境当中，做了沙盒，只能使用IE，但是可以绕过。</p>
+
+<p>使用IE的保存，弹出的对话框，新建一个powershell的bat批处理：</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/01e7382e8ab99c01d0863537faf05f73.jpg" alt="enter image description here" /></p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/f146627baa2841b8d2b41bd9bbec9a17.jpg" alt="enter image description here" /></p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/135c7baf2b9d56f49475d98c7275de09.jpg" alt="enter image description here" /></p>
+
+<p>利用powershell下载metasploit的反弹程序</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/1e45ab97340c0e449f9cf0fe3917b325.jpg" alt="enter image description here" /></p>
+
+<p>下载完毕后，在保存对话框中已管理员的权限运行</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/23aa06f5fb39971ad4c17fb03f86e3de.jpg" alt="enter image description here" /></p>
+
+<p>这样就获得了Citrix系统的权限</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/4b854c08b295704f1a3925c9c78da5ad.jpg" alt="enter image description here" /></p>
+
+<p>此时网络拓扑：</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/84ef1e9c8ae34c0eedddb1f1144638d8.jpg" alt="enter image description here" /></p>
+
+<p>在Citrix上，尝试从内存中获取用户名密码：</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/a19d4b1cebc9b581f865b65be3aacae2.jpg" alt="enter image description here" /></p>
+
+<p>这里包含了很多的用户名和密码，其中还包括一个windows域管理员的。</p>
+
+<p>给Citrix服务器创建了一个远程连接服务并使用域管理员登陆：</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/5e02f3a511d4aa9d6439c7b487d5d00a.jpg" alt="enter image description here" /></p>
+
+<p>至此已经完全控制了windows域。</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/f754d9c093db909031e77a570a0f25c3.jpg" alt="enter image description here" /></p>      </p>
+    
+</body>
+</html>

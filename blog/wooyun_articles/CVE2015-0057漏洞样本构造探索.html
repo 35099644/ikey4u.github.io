@@ -1,0 +1,107 @@
+<html>
+<head>
+     <title>CVE2015-0057漏洞样本构造探索 - cssembly</title>
+	 <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+</head>
+<body>
+<h1>URL:<a href="http://drops.wooyun.org/papers/4939">http://drops.wooyun.org/papers/4939</a></h1>
+
+      <p>
+        <h1>0x00 前言</h1>
+
+<hr />
+
+<p>微软最新的补丁包修补了CVE2015-0057的提权漏洞，同一天，漏洞的发现者发表了分析文章《One-Bit To Rule Them All: Bypassing Windows’ 10 Protections using a Single Bit》，看完文章，想尝试构造一下样本，原本以为很简单，结果期间遇到了几个问题，分享出来，希望能与大家一起讨论。</p>
+
+<h1>0x01 分析</h1>
+
+<hr />
+
+<p>由于分析文章里提到漏洞是由xxxEnableWndSBArrows引起的，就通过CreateWindowEx创建ScrollBar，然后调用EnableScrollBar，执行到xxxDrawScrollBar，按照分析文章里的说明，完整流程如下：</p>
+
+<!--more-->
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/3d6f57845917fe8afc28d258743d067c.jpg" alt="enter image description here" /></p>
+
+<p>结果发现可以执行到xxxGetColorObjects，但是总是没法走到xxxDefWindowProc，因为(*((_WORD *)P + 0x15) &amp; 0x3FFF) == 0x29A总是成立，最后google了一下，发现这里是判断当前窗体是不是ScrollBar。</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/ff88ca06e6d8f3912ef838773962310b.jpg" alt="enter image description here" /></p>
+
+<p>*((_WORD *)P + 0x15)表示FNID，是通过NtUserSetWindowFNID在创建窗体时设置的，可以在reactos的代码中看到，windows包含了如下的FNID。</p>
+
+<pre><code>#!c++
++// FNID's for NtUserSetWindowFNID
++#define FNID_BUTTON      0x02A1
++#define FNID_COMBOBOX    0x02A2
++#define FNID_COMBOLBOX   0x02A3
++#define FNID_DIALOG      0x02A4
++#define FNID_EDIT        0x02A5
++#define FNID_LISTBOX     0x02A6
++#define FNID_MDICLIENT   0x02A7
++#define FNID_STATIC      0x02A8
++#define FNID_IME         0x02A9
+</code></pre>
+
+<p>NtUserSetWindowFNID中，可以看到这里会对(&#95;WORD *)(v2 + 0x2A)处的值进行设置，(&#95;WORD *)P + 0x15与等价(_WORD *)(v2 + 0x2A)。</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/00c734f653167bf3ff843fbfaf4e9579.jpg" alt="enter image description here" /></p>
+
+<p>看来直接通过创建ScrollBar是不能执行到xxxDefWindowProc的。通过内核调试器，在此处设置断点，在屏幕上点动各种窗体，当打开任务管理器，点击显示所有用户进程时，触发了断点。查看此时的调用栈，看到了CListView！！！看来可能可以通过MFC的CListCtrl来触发xxxDefWindowProc函数的执行。</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/188d8bc91436de0bf9330e0f74c53630.jpg" alt="enter image description here" /></p>
+
+<p>重载了CListCtrl，当ListCtrl显示的东西过多时，就会出现ScrollBar，这样在CListCtrl里处理一下afx_msg void OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)消息，就能够处理CListCtrl里的ScrollBar的消息，进而释放掉ScrollBar窗体。当点击CListCtrl里的横向ScrollBar时，就会触发CListCtrlEx::OnHScroll，这次再调用EnableScrollBar，就能执行到xxxDefWindowProc函数。</p>
+
+<pre><code>#!c++
+void CListCtrlEx::OnHScroll( UINT nSBCode, UINT nPos, CScrollBar* pScrollBar )
+{
+    hScroll = this-&gt;m_hWnd; 
+    BOOL bEnable = ::EnableScrollBar( this-&gt;m_hWnd , SB_HORZ , ESB_DISABLE_BOTH );
+    CWnd::OnHScroll(nSBCode, nPos, pScrollBar);
+}
+</code></pre>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/cba3cd08ba5c8b9a680e2467bdceb443.jpg" alt="enter image description here" /></p>
+
+<p>不过又遇到了新的问题，signed int __stdcall xxxLoadUserApiHook()函数里总是没法执行到xxxLoadHmodIndex，显然这个函数是与UserApiHook相关的，(1 &lt;&lt; gihmodUserApiHook) &amp; <em>(_DWORD *)(</em>((_DWORD *)gptiCurrent + 46) + 0xBC)的条件总是成立，好吧，断点设置在win32k!xxxLoadUserApiHook+0x2b处，结果程序启动的时候，加载user32.dll，调用InitUserApiHook，最终会执行几次xxxLoadHmodIndex，之后就不再调用了。</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/fa69d588876e3d1fb0598366adc5962a.jpg" alt="enter image description here" /></p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/27788719bba9a6d27fe4dd239a38dd72.jpg" alt="enter image description here" /></p>
+
+<p>重新看了一下分析文章，核心就是在用户态回调时，释放掉窗体，因此只要找到另一条路径，在xxxEnableWndSBArrows返回前，将窗体释放就可以了。在xxxDefWindowProc里，会调用到SfnDWORD，该函数中就存在一个回调，如下图。KeUserModeCallback的第一个参数2表示的是ApiNumber，也就是说最终会通过用户态的KiUserCallbackDispatcher调用USER32!__fnDWORD函数，如果能够在调用该函数的时候，将窗体释放掉，也是能够达到触发漏洞的效果的。</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/4cabd8eb85690be38f48aa7a021cdaf9.jpg" alt="enter image description here" /></p>
+
+<p>定义一个forFree函数，在KeUserModeCallback回调到USER32!&#95;&#95;fnDWORD时，调用这个函数将窗体对象释放掉，第一次调用DestroyWindow( hScroll )释放窗体，第二次则对窗体是否被释放进行验证。通过在USER32!&#95;&#95;fnDWORD处调用forFree，可以看到调用EnableScrollBar最终触发了forFree执行。注意USER32!__fnDWORD会被频繁调用，因此要进行区分。</p>
+
+<pre><code>#!c++
+void forFree()
+{
+    DestroyWindow( hScroll );
+    DestroyWindow( hScroll );
+    return ;
+}
+</code></pre>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/ecda7a5fb145679ac7375b0d697df053.jpg" alt="enter image description here" /></p>
+
+<p>第一次调用DestroyWindow后，可以看到函数执行成功，返回值eax=1。再次调用DestroyWindow后，win32k!ValidateHwnd就无法根据hScroll的值来获取到对应的内核窗体结构，返回值eax=0。从xxxDefWindowProc返回之后，实际上窗体已经不再与之前传递给EnableScrollBar的句柄对应了。</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/1b4370188710399e19567ef81e19fa4f.jpg" alt="enter image description here" /></p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/7d8327e82734c6736bb5f4ec7b9d94ad.jpg" alt="enter image description here" /></p>
+
+<p>不过我在32位win7上，并没有找到分析文章里提到的OR操作和AND操作。</p>
+
+<p><img src="https://github.com/ikey4u/WooyunImages/raw/master/pics/7b130fd05135480ee09429ecc164db67.jpg" alt="enter image description here" /></p>
+
+<h1>0x02 结语</h1>
+
+<hr />
+
+<p>上面就是我对CVE2015-0057漏洞样本构造过程的探索，与分析文章文章里的内容存在差异，有什么不对的地方，希望能与大家交流，我的邮箱：<a class="__cf_email__" href="/cdn-cgi/l/email-protection" data-cfemail="34574747515956584d745359555d581a575b59">[email&#160;protected]</a><script data-cfhash='f9e31' type="text/javascript">
+/* <![CDATA[ */!function(){try{var t="currentScript"in document?document.currentScript:function(){for(var t=document.getElementsByTagName("script"),e=t.length;e--;)if(t[e].getAttribute("data-cfhash"))return t[e]}();if(t&&t.previousSibling){var e,r,n,i,c=t.previousSibling,a=c.getAttribute("data-cfemail");if(a){for(e="",r=parseInt(a.substr(0,2),16),n=2;a.length-n;n+=2)i=parseInt(a.substr(n,2),16)^r,e+=String.fromCharCode(i);e=document.createTextNode(e),c.parentNode.replaceChild(e,c)}t.parentNode.removeChild(t);}}catch(u){}}()/* ]]> */</script>。</p>      </p>
+    
+</body>
+</html>
