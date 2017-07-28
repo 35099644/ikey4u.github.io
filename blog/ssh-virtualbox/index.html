@@ -50,8 +50,14 @@
 而且有时候还不一定行得通,比如当你连接移动,电信或者联通提供的无线 WIFI 时,
 你设置静态 IP 后很有可能导致你连不上网络.更别说虚拟机了.经过一番探究可以如下做,
 而不用考虑 IP 地址的变化.</i></p>
+<p>首先安装 ssh,在 ubuntu 16.04 上安装方式如下:</p>
+<pre>sudo apt-get install openssh-client openssh-server</pre>
+<p>启动 ssh 服务的命令如下:</p>
+<pre>sudo /etc/init.d/ssh start</pre>
+<p>你可以修改 ssh 的默认服务端口(22),编辑 /etc/ssh/sshd_config 这个文件里面的 Port 值
+,然后重启 ssh: sudo /etc/init.d/ssh restart</p>
 
-<p>首先确保你设置的虚拟机网络连接方式为NAT模式,然后虚拟机已经关闭.获取VirtualBox中的虚拟机名称:</p>
+<p>然后确保你设置的虚拟机网络连接方式为NAT模式,然后虚拟机已经关闭.获取VirtualBox中的虚拟机名称:</p>
 
 <pre class="code"> VBoxManage list vms | awk -F\" '{print $2}' </pre>
 
