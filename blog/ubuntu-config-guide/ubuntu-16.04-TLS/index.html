@@ -34,7 +34,7 @@
 		</div>
 	</center>
 <!-- ===========================================下面开始写文章============================================ -->
-<p> Latest update:2017-02-11 Sat 05:13 pm </p>
+<p> Latest update:2017-08-13 16:27:21</p>
 <p>你有两种方式升级到Ubuntu 16.04,一种是从14.04升级,另一种是全新的安装16.04.两种方式我都尝试过了,
 最后还是选择了全新安装.</p>
 
@@ -133,6 +133,25 @@ Linux 下的许多音乐播放器功能设计复杂而没有人性的请参考 R
 里面有几款很经典而不失优雅的皮肤,比如我用的就是下面这款:</p>
 <img src="./audacious.png" alt="">
 <p>正所谓纯粹而简单的才是真正的美.</p>
+
+<!--<h4 class="subtitle">GIF 录制工具 peek</h4>
+内存占用太大! 差评! 无法使用! 
+<p>peek 是一款简洁易用的 GIF 录制工具,界面清晰而实用,官方主页在 <a href="https://github.com/phw/peek">这里</a>.
+在 ubuntu 16.04 源里已经有了该工具,直接执行 sudo apt install peek 即可.
+如果想手动编译,可以按照官网上的步骤来.使用 peek 时录制 GIF 需要设定 magick 的磁盘大小,
+否则 gif 很有可能会录制不成功,执行下面命令打开配置文件:
+</p>
+<pre>
+sudo gvim /etc/ImageMagick-6/policy.xml
+</pre>
+<p>翻到最下面,然后按下图红框中的修改即可:</p>
+<img src="./peek-config.png" alt="">
+<p>由于 peek 使用了 magick 来进行图像处理,中间用到的磁盘来存放缓存文件,
+如果太小,将会导致转换 gif 失败.这里修改为 5GB,你可以按个人喜好设置大小.
+最后放一张 peek 的 GUI:</p>
+<img src="./peek-gui.png" alt="">
+<p>嗯哼,就喜欢这么简洁而漂亮的界面!</p>-->
+
 
 <h3 class="titlebar">一些问题的解决</h3>
 <h4 class="subtitle">alt+tab切换窗口失灵</h4>
