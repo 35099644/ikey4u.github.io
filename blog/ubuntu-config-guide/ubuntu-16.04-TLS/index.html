@@ -134,8 +134,21 @@ Linux 下的许多音乐播放器功能设计复杂而没有人性的请参考 R
 <img src="./audacious.png" alt="">
 <p>正所谓纯粹而简单的才是真正的美.</p>
 
+<pre>修改grub背景图片</pre>
+<p>grub 2 及其以上支持 png,jpg 等图片,并且可以很方便的修改 grub 背景图片,
+首先打开 <b class="term">/etc/default/grub</b>,确保里面的相应设置如下,
+如果没有可以自己添加:</p>
+<pre>
+GRUB_DEFAULT=saved
+GRUB_SAVEDEFAULT=true
+#GRUB_HIDDEN_TIMEOUT=0
+</pre>
+<p>然后找一个你喜欢的图片,放到 <b class="term">/boot/grub/</b>目录下即可,
+最后执行 <b class="term">sudo update-grub</b>即可.</p>
+<p>嗯哼,就这么简单!</p>
+
 <!--<h4 class="subtitle">GIF 录制工具 peek</h4>
-内存占用太大! 差评! 无法使用! 
+内存占用太大! 差评! 无法使用!
 <p>peek 是一款简洁易用的 GIF 录制工具,界面清晰而实用,官方主页在 <a href="https://github.com/phw/peek">这里</a>.
 在 ubuntu 16.04 源里已经有了该工具,直接执行 sudo apt install peek 即可.
 如果想手动编译,可以按照官网上的步骤来.使用 peek 时录制 GIF 需要设定 magick 的磁盘大小,
