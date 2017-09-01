@@ -342,31 +342,9 @@ gnome-session-properties
 <br/>其中名字和注释都是自定义的,而命令则必须是正确的.<br/>
 另外一些免费的shadowssocks账号可以从这里获得:http://www.ishadowsocks.com/
 <hr/>
-Update(2016-01-30 Sat 08:00 AM):配置命令行终端Shadowsocks代理:<br/>
-
-1.安装tsocks<br/>
-<pre>
-apt-get install tsocks
-</pre>
-2.配置tsocks文件<br/>
-vim /etc/tsocks.conf
-<pre>
-local = 192.168.1.0/255.255.255.0
-local = 127.0.0.0/255.0.0.0
-server = 127.0.0.1  
-server_type = 5
-server_port = 1080  
-</pre>
-如果你的/etc/resolv.conf里面没有下面这一行:
-<pre> nameserver 127.0.0.1 </pre>
-你最好添加上去.<br/>
-3.测试<br/>
-<pre>
-tsocks wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-</pre>
-截图如下:<br/>
-<br/><img src="0x07.png"></img>
-如果你希望将socks5流量转发为http流量,那么你可以安装privoxy:
+Update(2017-09-01 13:22:18) <br/>
+配置命令行终端Shadowsocks代理:<br/>
+我们需要先安装 privoxy 将socks5流量转发为http流量:
 <pre> apt-get install privoxy </pre>
 然后打开/etc/privoxy/config,找到下面的内如做适当修改:
 <pre>
@@ -399,6 +377,29 @@ you-get的简要使用方法:
 获取下载的视频信息:you-get -i url
 #比如从上面获取了1080P视频的itag为137,于是我下载高清视频的命令如下:
 #you-get --itag=137 "https://www.youtube.com/watch?v=4_aOIA-vyBo"
+</pre>
+
+<p>现在我们来配置一下命令行终端的命令的代理,我以前用过 tsocks ,但是该软件总是连不上,
+不知原因为何,这里我们已经配置好了 http 代理,所以我们可以写一个简单 shell wrapper 来实现命令行代理,
+将下面脚本保存为 <b>prx</b> 然后 chmod +x prx,放到 /usr/local/bin 目录下即可:</p>
+<pre>
+#! /bin/bash
+#! Wrapper for proxy
+http=$http_proxy
+https=$https_proxy
+ftp=$ftp_proxy
+export http_proxy=127.0.0.1:8118
+export https_proxy=127.0.0.1:8118
+export ftp_proxy=127.0.0.1:8118
+bash -c "$*"
+export http_proxy=$http
+export https_proxy=$https
+export ftp_proxy=$ftp
+</pre>
+<p>然后就可以执行下面命令来直接访问被墙资源了:</p>
+<pre>
+prx CMD
+# prx wget google.com
 </pre>
 
 <h4 class="subtitle">6.安装Windows平台字体以及渲染字体</h4>
