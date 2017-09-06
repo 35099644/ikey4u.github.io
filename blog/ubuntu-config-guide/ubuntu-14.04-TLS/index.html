@@ -349,8 +349,14 @@ Update(2017-09-01 13:22:18) <br/>
 然后打开/etc/privoxy/config,找到下面的内如做适当修改:
 <pre>
 listen-address  localhost:8118
-forward-socks5   /               127.0.0.1:1080 .
+forward-socks4    /               127.0.0.1:1080 .
+forward-socks4a   /               127.0.0.1:1080 .
+forward-socks5    /               127.0.0.1:1080 .
+forward-socks5t   /               127.0.0.1:1080 .
 </pre>
+<!--2017-09-06
+mac 下启动方式:
+sudo /usr/local/sbin/privoxy /usr/local/etc/privoxy/config-->
 其中localhost:8118是默认的监听地址,而127.0.0.1:1080则是本地ss服务器的监听地址.然后你可以测试一下:
 <pre> curl -x 127.0.0.1:8118 google.com </pre>
 返回类似如下表示成功:
