@@ -92,12 +92,13 @@
 <img src="./images/dnspod.png" alt="">
 <p>注意其中的记录为 CNAME 的记录值需要修改为你自己的二级域名.
 这样修改完成后,大约十几分钟就可以完事儿,再访问 www.ahageek.com 就可以访问你的 github页面了.</p>
-
-<ol>
-    <li><a href=""><b></b></a></li>
-    <li><a href=""><b></b></a></li>
-    <li><a href=""><b></b></a></li>
-</ol>
+<h1 class="titlebar">其他问题</h1>
+<p>域名更换后,原来的文章里面有很多 ikey4u.com 的链接,打开时会导致访问失败,需要替换为ahageek.com,
+OK,让我们祭出我们的 SHELL 大法,一条命令搞定:
+</p>
+<pre class="code">
+------➢ ⚔ $ find ./ -type f -exec sed -i -e 's/ikey4u.com/ahageek.com/g' {} \;
+</pre>
 </body>
  <!-- ===========================================联系方式 & 版权============================================ -->
 <br/><br/><br/>
