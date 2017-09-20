@@ -13,7 +13,7 @@
 <link rel="stylesheet" href="http://www.ahageek.com/home-assets/white-menu.css" type="text/css">
 <!-- 文章样式 -->
 <link rel="stylesheet" href="http://www.ahageek.com/blog/blog-assets/blog-style.css" type="text/css">
- 
+
 <!-- 代码高亮:不再使用 2016-06-16 Thu 02:27 PM -->
 <!--<link rel="stylesheet" href="http://www.ahageek.com/home-assets/highlight-codes/hljs.css">-->
 <!--<link rel="stylesheet" href="http://www.ahageek.com/home-assets/highlight-codes/hljs-sublime.css">-->
@@ -26,7 +26,7 @@
 
 <!--数学公式-->
     <!--MathJax路径:-->
-    <script type="text/javascript" async 
+    <script type="text/javascript" async
     src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=AM_CHTML">
     </script>
 </head>
@@ -82,20 +82,21 @@ Latest update: 2016-10-19 Wed 04:13 PM <br/>
     <li> <a href="#sec0x09"><h3 class="subtitle">9.其他可选安装</h3></a></li>
     <li> <a href="#sec0x10"><h3 class="subtitle">10.OpenWrt命令总结</h3></a></li>
     <li> <a href="#sec0x11"><h3 class="subtitle">11.ISSUES</h3></a></li>
+    <li> <a href="#sec0x12"><h3 class="subtitle">12.Updates 2017-09-20:WAN 口桥接</h3></a></li>
 </ul>
 <br/><b>本文所涉及的文件(如果有的话)大部分可以通过文章末尾的链接下载.</b> <br/>
 <a name="sec0x00"></a>
 <h3 class="titlebar">后续补充</h3>
 <h3 class="subtitle">搭建FTP服务器</h3>
 <pre>
-opkg update 
+opkg update
 opkg install vsftpd
 
 ===============配置匿名访问===============
 1.编辑vsftpd配置文件:
 $:vim /etc/vsftpd.conf
 userlist_enable=YES
-userlist_deny=NO 
+userlist_deny=NO
 userlist_file=/etc/vsftpd.users
 anonymous_enable=YES
 no_anon_password=YES
@@ -159,7 +160,7 @@ root@OpenWrt:~# dmesg  | grep -A 10 "MTD partitions"
 <img src="layout.png"></img>
 每个块的大小则可以通过如下命令查看:
 <pre>
-root@OpenWrt:~# cat /proc/mtd 
+root@OpenWrt:~# cat /proc/mtd
 dev:    size   erasesize  name
 mtd0: 00020000 00010000 "u-boot"
 mtd1: 0011f64c 00010000 "kernel"
@@ -183,14 +184,14 @@ MR12U空间十分小,装其他软件十分困难,最初也是因为先刷入了O
 cd ~/Downloads
 mkdir openwrt && cd openwrt
 wget http://downloads.openwrt.org/chaos_calmer/15.05.1/ar71xx/generic/OpenWrt-ImageBuilder-15.05.1-ar71xx-generic.Linux-x86_64.tar.bz2
-tar -jxvf OpenWrt-ImageBuilder-15.05.1-ar71xx-generic.Linux-x86_64.tar.bz2 
+tar -jxvf OpenWrt-ImageBuilder-15.05.1-ar71xx-generic.Linux-x86_64.tar.bz2
 cd OpenWrt-ImageBuilder-15.05.1-ar71xx-generic.Linux-x86_64
 </pre>
 我们需要配置repositories.conf文件,指定源地址,该文件位于OpenWrt-ImageBuilder-15.05.1-ar71xx-generic.Linux-x86_64
 目录下面(顶层目录).打开repositories.conf,替换其中src/gz为如下行:
 <pre>
-src/gz ar71xx_base          http://openwrt.mirrors.ustc.edu.cn/chaos_calmer/15.05.1/ar71xx/generic/packages/base 
-src/gz ar71xx_luci          http://openwrt.mirrors.ustc.edu.cn/chaos_calmer/15.05.1/ar71xx/generic/packages/luci 
+src/gz ar71xx_base          http://openwrt.mirrors.ustc.edu.cn/chaos_calmer/15.05.1/ar71xx/generic/packages/base
+src/gz ar71xx_luci          http://openwrt.mirrors.ustc.edu.cn/chaos_calmer/15.05.1/ar71xx/generic/packages/luci
 src/gz ar71xx_management    http://openwrt.mirrors.ustc.edu.cn/chaos_calmer/15.05.1/ar71xx/generic/packages/management
 src/gz ar71xx_packages      http://openwrt.mirrors.ustc.edu.cn/chaos_calmer/15.05.1/ar71xx/generic/packages/packages
 src/gz ar71xx_routing       http://openwrt.mirrors.ustc.edu.cn/chaos_calmer/15.05.1/ar71xx/generic/packages/routing
@@ -219,7 +220,7 @@ TLMR12U:
 编译生成的镜像存放在bin/architecture(其中architecture为你路由器的架构,比如我这里就为ar71xx)目录下面.<br/>
 我们可以看一下原有的镜像大小为:
 <pre>
-root@shell:~# ls -hl ~/Desktop/openwrt-15.05.1-ar71xx-generic-tl-mr12u-v1-squashfs-factory.bin 
+root@shell:~# ls -hl ~/Desktop/openwrt-15.05.1-ar71xx-generic-tl-mr12u-v1-squashfs-factory.bin
 -rw-r--r-- 1 root root 3.8M Jul  8 01:09 /root/Desktop/openwrt-15.05.1-ar71xx-generic-tl-mr12u-v1-squashfs-factory.bin
 </pre>
 编译生成的路由器镜像位于bin/ar71xx/目录下面:
@@ -261,10 +262,10 @@ cd /tmp
 sysupgrade -v openwrt-15.05.1-ar71xx-generic-tl-mr12u-v1-squashfs-sysupgrade.bin.bin
 
 ....
-Writing from <stdin> to firmware ...     
+Writing from <stdin> to firmware ...
 Appending jffs2 data from /tmp/sysupgrade.tgz to firmware...TRX header not found
 Error fixing up TRX header
-    
+
 Upgrade completed
 Rebooting system...
 </pre>
@@ -301,11 +302,11 @@ root@OpenWrt:~# block info
 </pre>
 可以看到需要的三个分区都出来了. 接着把路由器上的东西都拷贝到第一个分区上去,这里为sda1:
 <pre>
-mount /dev/sda1 /mnt  
+mount /dev/sda1 /mnt
 mkdir /tmp/router2usb
 mount --bind / /tmp/router2usb
-tar -C /tmp/router2usb -cvf - . | tar -C /mnt -xvf -  
-sync   
+tar -C /tmp/router2usb -cvf - . | tar -C /mnt -xvf -
+sync
 umount /tmp/router2usb
 </pre>
 解释一下上面的命令:mount的bind选项用于将已经存在的目录绑定到一个新的目录下面,
@@ -328,7 +329,7 @@ swapon /dev/sda2
 <h3 class="subtitle">3.3 自动挂载</h3>
 再修改fstab以便自动挂载分区,首先将当前挂载情况写到fstab中:
 <pre>
-block detect > /etc/config/fstab 
+block detect > /etc/config/fstab
 </pre>
 使用vi修改,修改完成后如下:
 <pre>
@@ -378,8 +379,8 @@ lists_dir ext /var/opkg-lists
 option overlay_root /overlay
 option check_signature 1
 #中科大源列表(使用https会失败)
-src/gz ar71xx_base          http://openwrt.mirrors.ustc.edu.cn/chaos_calmer/15.05.1/ar71xx/generic/packages/base 
-src/gz ar71xx_luci          http://openwrt.mirrors.ustc.edu.cn/chaos_calmer/15.05.1/ar71xx/generic/packages/luci 
+src/gz ar71xx_base          http://openwrt.mirrors.ustc.edu.cn/chaos_calmer/15.05.1/ar71xx/generic/packages/base
+src/gz ar71xx_luci          http://openwrt.mirrors.ustc.edu.cn/chaos_calmer/15.05.1/ar71xx/generic/packages/luci
 src/gz ar71xx_management    http://openwrt.mirrors.ustc.edu.cn/chaos_calmer/15.05.1/ar71xx/generic/packages/management
 src/gz ar71xx_packages      http://openwrt.mirrors.ustc.edu.cn/chaos_calmer/15.05.1/ar71xx/generic/packages/packages
 src/gz ar71xx_routing       http://openwrt.mirrors.ustc.edu.cn/chaos_calmer/15.05.1/ar71xx/generic/packages/routing
@@ -400,10 +401,10 @@ opkg install luci luci-i18n-base-zh-cn
 <br/><img src="0x03.png"></img> <br/>
 最好自己备份一下配置文件:
 <pre>
-System->Backup/Flash Firmware-Backup/Restore->Generate archive    
+System->Backup/Flash Firmware-Backup/Restore->Generate archive
 </pre>
 <a name="sec0x05"></a>
-<h3 class="titlebar">5.无线打印机</h3> 
+<h3 class="titlebar">5.无线打印机</h3>
 <p>这一块儿我已经鼓捣了好久,主要是尝试过的是cups,p910nd以及USB over IP(usbip),但是很不幸,
 每一个都是让我抓狂到不行,花费了大量时间解决各种问题,但是最终还是无法正常打印.</p>
 <p>但又很幸运的是,我发现了VirtualHere这个东西.到virtualhere.com下载对应客户端.</p>
@@ -426,9 +427,9 @@ OpenWrt上运行vhusbdmips,Linux上运行vhuit64.<br/>
 如果以后真的有需要,我会考虑买一个License.我来动手破解是可能的,但是我更希望能够做一个消费者,来支持开发的持续进行.
 
 <a name="sec0x06"></a>
-<h3 class="titlebar">无线存储:挂载 2TB 硬盘</h3> 
+<h3 class="titlebar">无线存储:挂载 2TB 硬盘</h3>
 <a name="sec0x06-1"></a>
-<h4 class="subtitle">工具安装</h4> 
+<h4 class="subtitle">工具安装</h4>
 <pre>
 opkg update
 opkg install ntfs-3g kmod-usb-storage block-mount kmod-fs-ext4 kmod-fuse
@@ -438,7 +439,7 @@ opkg install kmod-fs-vfat  kmod-nls-cp437 kmod-nls-iso8859-1 kmod-nls-utf8 fdisk
 <pre>
 mkdir /mnt/cloud-storage
 #将下面这句加入/etc/rc.local,最好放在最前面
-#ntfs-3g /dev/sdb1 /mnt/cloud-storage -o noatime,big_writes,async 
+#ntfs-3g /dev/sdb1 /mnt/cloud-storage -o noatime,big_writes,async
 </pre>
 其中/dev/sdb1可以由fdisk -l来获得.如果是EXT格式的硬盘,请用下面的方法挂载:
 <p style="color:red">update:2016-10-04 Tue 01:46 AM</p>
@@ -446,16 +447,16 @@ mkdir /mnt/cloud-storage
 <pre> /dev/sda1: UUID="a1b29c10-0ae6-41ca-a201-97de37b00175" NAME="EXT_JOURNAL" VERSION="1.0" TYPE="ext4" </pre>
 2.打开fstab:/etc/config/fstab,加入如下信息:
 <pre>
- config 'mount'                                        
+ config 'mount'
     option target '/mnt/cloud-storage'
     option uuid   'a1b29c10-0ae6-41ca-a201-97de37b00175'
-    option enabled '1' 
+    option enabled '1'
 </pre>
 同样地,目录/mnt/cloud-storage你要事先建立.
 
 
 <a name="sec0x06-2"></a>
-<h4 class="subtitle">安装Samba服务并配置</h4> 
+<h4 class="subtitle">安装Samba服务并配置</h4>
 <pre>
 #安装
     opkg install samba36-server luci-app-samba
@@ -482,24 +483,24 @@ mkdir /mnt/cloud-storage
             option 'create_mask'            '0755'
             option 'dir_mask'               '0755'
 
-    config sambashare                                                  
+    config sambashare
             option 'name'                   'cloud-share-public'
             option 'path'                   '/mnt/cloud-storage/Public'
-            option 'read_only'              'no'                       
-            option 'guest_ok'               'yes'               
-            option 'create_mask'            '0755'              
-            option 'dir_mask'               '0755'                     
-                                                         
-                                                                
-                                                                       
-    config sambashare                                  
-            option 'name'                   'music-share'       
-            option 'path'                   '/mnt/sda3'                
-            option 'users'                  'owner'             
-            option 'read_only'              'no'                       
-            option 'guest_ok'               'yes'        
-            option 'create_mask'            '0755'     
-            option 'dir_mask'               '0755' 
+            option 'read_only'              'no'
+            option 'guest_ok'               'yes'
+            option 'create_mask'            '0755'
+            option 'dir_mask'               '0755'
+
+
+
+    config sambashare
+            option 'name'                   'music-share'
+            option 'path'                   '/mnt/sda3'
+            option 'users'                  'owner'
+            option 'read_only'              'no'
+            option 'guest_ok'               'yes'
+            option 'create_mask'            '0755'
+            option 'dir_mask'               '0755'
 #访问方式:
     smb://openwrt/cloud-share/
 </pre>
@@ -549,7 +550,7 @@ opkg install shadow-groupadd shadow-useradd shadow-userdel shadow-groupdel
 1.设置完全访问用户组theroot:
     在linux中添加theowner用户组:groupadd gowner #可以使用groupdel删除
     将用户god添加到该用户组:useradd -g gowner owner #可以使用userdel删除
-    设置密码passwd owner 
+    设置密码passwd owner
 2.设置owner到samba用户:
 先看是否存在/etc/samba/smbpasswd,若不存在touch一个.
 smbpasswd -a owner   #smbpasswd -x owner  #删除owner用户
@@ -561,7 +562,7 @@ chown -R owner /path/to/folder #如果硬盘较大,时间会很长
 
 
 <a name="sec0x07"></a>
-<h3 class="titlebar">7.系统备份</h3> 
+<h3 class="titlebar">7.系统备份</h3>
 如果感觉U盘上的路由器系统配置好了,关掉路由器,拔掉U盘,然后插到电脑上使用dd命令备份系统镜像:<br/>
 使用<b>df -h</b>命令获得如下输出:
 <pre>
@@ -580,9 +581,9 @@ gzip -dc /path/to/backup/openwrt-usb-image-2016.08.05.img.gz | dd of=/dev/sdc1
 注意sdc1你需要更换为你自己的系统分区.
 如果备份期间你想用网,打开路由器就行啊,反正不用U盘也行,是不是很爽呢?
 <a name="sec0x08"></a>
-<h3 class="titlebar">8.OpenWrt的网络配置</h3> 
+<h3 class="titlebar">8.OpenWrt的网络配置</h3>
 <a name="sec0x08-1"></a>
-<h4 class="subtitle">8.1 无线网络的配置</h4> 
+<h4 class="subtitle">8.1 无线网络的配置</h4>
 <pre>
 #cat /etc/config/wireless
 config wifi-device  radio0
@@ -604,7 +605,7 @@ config wifi-iface
 在文件/etc/config/wireless中,你可以配置是否开启WIFI(option disabled 1),
 WIFI的SSID(option ssid),加密方式(option encryption psk2),以及WIFI密码(option key xxxx).
 <a name="sec0x08-2"></a>
-<h4 class="subtitle">8.2 宽带连接的配置</h4> 
+<h4 class="subtitle">8.2 宽带连接的配置</h4>
 <pre>
 #cat /etc/config/network
 config interface 'loopback'
@@ -633,24 +634,24 @@ config interface 'wan'
 (option ipaddr '192.168.1.1'),子网掩码为255.255.255.0(option netmask '255.255.255.0').<br/>
 宽带拨号则在WAN一栏里皮遏制,协议通常是pppoe,然后就是用户名和密码了.
 <a name="sec0x09"></a>
-<h3 class="titlebar">9.其他可选安装</h3> 
+<h3 class="titlebar">9.其他可选安装</h3>
 <pre>
 opkg update
-opkg install aria2 
+opkg install aria2
 opkg install python python3
 </pre>
 
 <a name="sec0x10"></a>
-<h3 class="titlebar">10.OpenWrt命令总结</h3> 
+<h3 class="titlebar">10.OpenWrt命令总结</h3>
 <pre>
 #wifi连接人数
-    iw dev wlan0 station dump |grep Station |wc -l  
+    iw dev wlan0 station dump |grep Station |wc -l
 #连接的用户MAC
-    iw dev wlan0 station dump |grep Station |awk -F ' ' ' {print $2}' 
+    iw dev wlan0 station dump |grep Station |awk -F ' ' ' {print $2}'
 #连接用户的信号强弱
-    iw dev wlan0 station dump  
+    iw dev wlan0 station dump
 #查看wifi信息
-    iw wlan0 info 
+    iw wlan0 info
 #查看连接信息:
     cat  /tmp/dhcp.leases
 #查看banner
@@ -658,8 +659,8 @@ opkg install python python3
 </pre>
 
 <a name="sec0x11"></a>
-<h3 class="titlebar">11.ISSUES</h3> 
-<h4 class="subtitle">0x01.ImageBuilder的内核大小限制</h4> 
+<h3 class="titlebar">11.ISSUES</h3>
+<h4 class="subtitle">0x01.ImageBuilder的内核大小限制</h4>
 <section style="color:red">Solved 2016-08-10 Wed 12:17 AM</section>
 有网友在使用ImageBuilder构件自定义固件时,加入了luci的一个语言包:luci-i18n-base-zh-cn,编译命令如下:
 <pre>
@@ -706,32 +707,32 @@ Description: Translation for luci-base - 普通话 (Chinese)
 </pre>
 太困了,匆忙写了一个脚本,检测所自定义的包大小以及可用空间:
 <pre>
-#! /bin/sh                                                                                                                                        
-                                                                                                                                                  
-# filename:Size limit calculator for Openwrt ImageBuilder                                                                                         
-# Author:bugnofree                                                                                                                                
-# www.ahageek.com                                                                                                                                  
-                                                                                                                                                  
-#Get all of the pkgs size                                                                                                                         
-#============================                                                                                                                     
-sizes=$(for pkg in $@;do opkg info $pkg|grep Size|cut -d ":" -f 2;done)                                                                           
-#Accumulate the size                                                                                                                              
-for sz in $sizes                                                                                                                                  
-do                                                                                                                                                
-        let "sum+=sz"                                                                                                                             
-done                                                                                                                                              
-echo "Pkgs size sum:$sum Bytes"                                                                                                                   
-                                                                                                                                                  
-#available space                                                                                                                                  
-#===========================                                                                                                                      
-beg=$(dmesg | grep -A 5 MTD | grep -E "kernel|linux"  | cut -d "]" -f 2 | cut -d ":" -f 1 | cut -d "-" -f 1)                                      
-end=$(dmesg | grep -A 5 MTD | grep -E "kernel|linux"  | cut -d "]" -f 2 | cut -d ":" -f 1 | cut -d "-" -f 2)                                      
-beg_int=$(printf "%d\n" $beg)                                                                                                                     
-#echo $beg_int                                                                                                                                     
-end_int=$(printf "%d\n" $end)                                                                                                                     
-#echo $end_int                                                                                                                                     
-let "space=$end_int-$beg_int"                                                                                                                     
-echo "Availavle space:$space bytes" 
+#! /bin/sh
+
+# filename:Size limit calculator for Openwrt ImageBuilder
+# Author:bugnofree
+# www.ahageek.com
+
+#Get all of the pkgs size
+#============================
+sizes=$(for pkg in $@;do opkg info $pkg|grep Size|cut -d ":" -f 2;done)
+#Accumulate the size
+for sz in $sizes
+do
+        let "sum+=sz"
+done
+echo "Pkgs size sum:$sum Bytes"
+
+#available space
+#===========================
+beg=$(dmesg | grep -A 5 MTD | grep -E "kernel|linux"  | cut -d "]" -f 2 | cut -d ":" -f 1 | cut -d "-" -f 1)
+end=$(dmesg | grep -A 5 MTD | grep -E "kernel|linux"  | cut -d "]" -f 2 | cut -d ":" -f 1 | cut -d "-" -f 2)
+beg_int=$(printf "%d\n" $beg)
+#echo $beg_int
+end_int=$(printf "%d\n" $end)
+#echo $end_int
+let "space=$end_int-$beg_int"
+echo "Availavle space:$space bytes"
 </pre>
 运行:
 <pre>
@@ -747,6 +748,41 @@ Availavle space:1177164 bytes
 文件说明:<br/>
 openwrt-15.05.1-ar71xx-generic-with-usb-extend-pkgs.zip:包含了USB扩展包的自定义固件压缩包(适用于tl-mr12u-v1).<br/>
 OpenWrt-ImageBuilder-15.05.1-ar71xx-generic.Linux-x86_64.tar.bz2:ImageBuilder<br/>
+<a name="sec0x12"></a>
+<h1 class="titlebar">WAN 口桥接</h1>
+<p>2017-09-20</p>
+<p>先看需求,网络简单拓扑如下:</p>
+<img src="./wan-brg.svg" alt="">
+<p>本来台式机位于 172.20.109.x 网段,172.20 也是个局域网,其中的每台电脑都通过一跟网线连接,
+我的台式机名称为 pc,还有打印机 printer,以及其他电脑,pc1,pc2等等.
+现在我希望我的笔记本通过,手机等通过无线网络和 172 网内的电脑同处于一个网段,
+这时候,我把 pc 上的网线拔掉插到 OpenWRT(以下简称 op) 上的 WAN 口中去,
+然后通过一跟网线,将 op 的 LAN 口和 pc 的网口连接上,然后希望通过对 op 设置,
+实现 pc 以及 op 发出的 WiFi 网络是 172.20 网段.</p>
+<p>如果仅仅要求 pc WiFi 网络是 172.20 网段,实现非常简单,只需要 Network/Wireless,
+选择 WiFi 网络,修改 Interface Configuration 中的 Network 为 WAN 即可.</p>
+<p>但是要让连接 LAN 口的 pc 也处于 172.20 网段,可没那么简单,摸索了三四个小时才搞定.
+方法见下面的设置.</p>
+<p>总体上,实现需求的解决方法如下:</p>
+<h2 class="subtitle">WAN 口设置</h2>
+<p>首先设置 WAN 口网络桥接,依次 Network/Wireless,选择你的网络,然后在 Interface
+Configuration 中设置 Newtwork 为 WAN. Mode 设置为 Access Point 应该也是可以的.如下图所示:</p>
+<img src="./wan-brg-01.png" alt="">
+<p>接着设置 WAN 口接口,依次 Network/Interfaces,选择 WAN/Physical Settings,按照下图勾选:</p>
+<img src="./wan-brg-02.png" alt="">
+注意勾选 Bride interfaces,这个可以设置 WAN 口桥接到指定的接口上,
+指定的接口在 Interface 中设定,如上图所示的,勾选了 WAN 口,LAN 口,以及 OpenWRT 发出无线网络接口.
+<h2 class="subtitle">LAN 口设置</h2>
+<p>进入到 LAN 接口,在 General Setup 中设置协议为 DHCP client,如下图:</p>
+<img src="./wan-brg-03.png" alt="">
+<p>在 Physical Settings 中设定 Interface 为带有 lan 的接口.如下图:</p>
+<img src="./wan-brg-04.png" alt="">
+<p>在 Firewall Settings 设置 firmware-zone 为 wan,如下图:</p>
+<img src="./wan-brg-05.png" alt="">
+
+<p>最后, Save &amp; Apply,重启网络即可,这时候连接 LAN 的 PC 以及连接到 OpenWRT 的WIFI 网络的客户端,
+它们所有的 IP 都和 WAN 口处于一个网段.</p>
+
 </body>
 
 <!-- ===========================================联系方式============================================ -->
