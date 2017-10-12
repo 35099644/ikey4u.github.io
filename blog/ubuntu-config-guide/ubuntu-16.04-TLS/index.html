@@ -167,6 +167,14 @@ sudo gvim /etc/ImageMagick-6/policy.xml
 
 
 <h3 class="titlebar">一些问题的解决</h3>
+<h4 class="subtitle">台式机安装 ubuntu 16.04 提示 信号超出范围</h4>
+<p>可以先安装 Server 版本,然后安装桌面,再安装显卡驱动.使用下面命令查找最佳驱动:</p>
+<pre>
+sudo ubuntu-drivers list
+sudo ubuntu-drivers devices
+</pre>
+<p>然后选择推荐显卡驱动进行安装即可.</p>
+
 <h4 class="subtitle">alt+tab切换窗口失灵</h4>
 <p>有一次,突然地,我发现我的 alt+tab 切换窗口就失灵了,
 找了很多解决方法,比如安装 compiz 管理工具,重新安装桌面等等,这些都无效.
