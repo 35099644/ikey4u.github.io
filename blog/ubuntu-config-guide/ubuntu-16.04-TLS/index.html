@@ -134,18 +134,43 @@ Linux 下的许多音乐播放器功能设计复杂而没有人性的请参考 R
 <img src="./audacious.png" alt="">
 <p>正所谓纯粹而简单的才是真正的美.</p>
 
-<pre>修改grub背景图片</pre>
-<p>grub 2 及其以上支持 png,jpg 等图片,并且可以很方便的修改 grub 背景图片,
-首先打开 <b class="term">/etc/default/grub</b>,确保里面的相应设置如下,
+
+<h4 class="subtitle">修改grub背景图片</h4>
+<p>grub 2 及其以上支持 png 图片作为背景图片,并且可以很方便的修改 grub 背景图片,
+如下几个地方是 grub 依次寻找的图片位置: </p>
+<p>
+<ol>
+    <li>/etc/default/grub 中的 GRUB_BACKGROUND 参数.</li>
+    <li>/boot/grub/ 目录,如果有多张图片,则按照字母顺序选择第一个.</li>
+    <li>/usr/share/desktop-base/grub_background.sh  里面所声明的图片文件.</li>
+    <li>/etc/grub.d/05_debian_theme 的 WALLPAPER 参数.</li>
+</ol>
+GRUB 2 可以使用 PNG/JPG/JPEG/TAG 格式的图片文件.这些图片文件的属性必须有以下属性:
+<ul>
+    <li>JPG/JPEG:必须是 8bit(256色)</li>
+    <li>图像色彩模式:必须是 RGB 模式</li>
+</ul>
+通常 PNG 一般都是满足条件的,我们可以将其他图片转换为 png 图片,
+这个通过 convert 命令可以很方便的做到,比如:
+<pre>convert a.jpg a.png</pre>
+</p>
+
+接着打开 <b class="term">/etc/default/grub</b>,确保里面的相应设置如下,
 如果没有可以自己添加:</p>
 <pre>
 GRUB_DEFAULT=saved
 GRUB_SAVEDEFAULT=true
 #GRUB_HIDDEN_TIMEOUT=0
 </pre>
-<p>然后找一个你喜欢的图片,放到 <b class="term">/boot/grub/</b>目录下即可,
-最后执行 <b class="term">sudo update-grub</b>即可.</p>
-<p>嗯哼,就这么简单!</p>
+
+<p>另外你也可以在 /etc/default/grub 中设置分辨率:</p>
+
+<pre>
+GRUB_GFXMODE=1600x1200,1280x1024,1024x768,800x600,640x480
+</pre>
+
+<p>最后执行 <b class="term">sudo update-grub</b>即可.</p>
+
 
 <!--<h4 class="subtitle">GIF 录制工具 peek</h4>
 内存占用太大! 差评! 无法使用!
