@@ -46,8 +46,8 @@
 <!--背景信息-->
 <h3 class="text3d">Background && Abstract</h3>
 <p>Some writeups for SHACTF-2017 just for the purpose of learing.
-You could download the attachment from here:
-<b class="term">6ZO+5o6l77yaaHR0cDovL3Bhbi5iYWlkdS5jb20vcy8xZ2VVY3p6dCDlr4bnoIHvvJpleTVi</b>
+You could download the attachment from
+<a href="https://github.com/ikey4u/BlogStuffs/tree/master/blog/shactf-2017">here</a>.
 </p>
 
 <h3 class="text3d">Environment</h3>
@@ -74,7 +74,7 @@ Here,let we run the program firstly:</p>
 IDA to open Strings Windows,then we find those strings in IDA,showed as following image: </p>
 <img src="./images/asby-str.png" alt="">
 <center>Asby Strings</center>
-<p>We colud locate where the string 'WRONG' is used through the crossed reference supplied
+<p>We could locate where the string 'WRONG' is used through the crossed reference supplied
 by IDA,then we are guided to here:</p>
 
 <img src="./images/asby-wrongcorrect.png" alt="">
@@ -218,6 +218,204 @@ print()
 </pre>
 <p>Run the codes listed above and it will give you the flag:</p>
 <b class="term">flag{024baa8ac03ef22fdde61c0f11069f2f}</b>
+
+<h1 class="titlebar">Forenisics/WannaFly</h1>
+<p class="term">Posted on 2017-10-29 </p>
+<p>So,this ia forenisic challenge,firstly let's uncompress the .tgz file:</p>
+<pre class="code">
+root@kali:~# tar zxvf wannafly.tgz
+kimberly.img
+</pre>
+<p>and look what exactly it <b class="term">kimberly.img</b>:</p>
+<pre class="code">
+root@kali:~# file kimberly.img
+kimberly.img: Linux rev 1.0 ext4 filesystem data, UUID=56e89f54-c4da-4c5e-a3c6-67398d341788 (extents) (large files) (huge files)
+</pre>
+<p>Well,not so bad,it is an ext4 filesystem data,mount it:</p>
+<pre class="code">
+root@kali:~# mount -t ext4 -o loop kimberly.img  /mnt/tmp/
+cd /mnt/tmp
+</pre>
+<p>Now let see what is hold in the mouted file system,we use <b class="term">tree</b>
+command with <b class="term">-a</b> option to show all possible files:</p>
+<pre>
+root@kali:~# tree -a /mnt/tmp/
+/mnt/tmp/
+├── ...
+├── .bash_history
+├── .cache
+│   └── motd.legal-displayed
+├── Desktop
+├── Documents
+├── Downloads
+├── lost+found
+├── Music
+├── Pictures
+│   ├── 78d14f37ae413511b119776c2294c414.png
+│   ├── 8210680-Palomino-Shetland-pony-Equus-caballus-3-years-old-standing-in-front-of-white-background-Stock-Photo.png
+│   ├── 8210722-Palomino-Shetland-pony-Equus-caballus-3-years-old-standing-in-front-of-white-background-Stock-Photo.png
+│   ├── bay_pony_cantering_2_by_tamacilo.png
+│   ├── bay_pony_rolling2_by_tamacilo.png
+│   ├── connemara_pony2_750.png
+│   ├── dappled-pony.png
+│   ├── f09086061f03f080d0851d9154e11653.png
+│   ├── Het-verschil-tussen-een-pony-en-een-shetland-pony.png
+│   ├── oli.png
+│   ├── Peppermint-Pony.png
+│   ├── pony.png
+│   ├── pony_shutterstock_50279794.png
+│   ├── shetlander-pony.png
+│   ├── shutterstock_146544482-680x400.png
+│   ├── white-pony-951772_960_720.png
+│   └── Wild_Pony_Assateague.png
+├── Public
+├── Templates
+└── Videos
+</pre>
+<p>Look it carefully,you will notice that there are two interesting files
+<b class="term">...</b>, <b class="term">.bash_history</b> and
+a directory <b class="term">.cache</b>. Let we <b>cat</b> the .bash_history file,
+and we have these stuffs:
+</p>
+<img src="./images/wannacry-bash.png" alt="">
+<p>You will immediately notice that a weird string <b class="term">Hb8jnSKzaNQr5f7p</b> appears.
+Without any hesitation,we open the file <b class="term">...</b>,it turns out that the
+file is a python script.The code is a few  long,so I just select a snippet and put it here:
+</p>
+<pre>
+def get_iv():
+    iv = ""
+    random.seed(int(time()))
+    for i in range(0,16):
+        iv += random.choice(string.letters + string.digits)
+    return iv
+
+# m:plaintext p:key == Hb8jnSKzaNQr5f7p
+def encrypt(m, p):
+    iv=get_iv()
+    aes = AES.new(p, AES.MODE_CFB, iv)
+    return base64.b64encode(aes.encrypt(m))
+
+def decrypt(m, p, i):
+    aes = AES.new(p, AES.MODE_CFB, i)
+    return aes.decrypt(base64.b64decode(m))
+def encrypt_image(img):
+   data = open(img, 'r').read()
+   # Open original data and encrypt
+   encrypted_img = encrypt(data, sys.argv[1])
+   blurred_img = open('/tmp/sha.png', 'r').read()
+   # Zeros the original image
+   stat = os.stat(img)
+   with open(img, 'r+') as of:
+       of.write('\0' * stat.st_size)
+       of.flush()
+   # The encrypted image is appended to the tail
+   open(img, 'w').write(blurred_img + "\n" + encrypted_img)
+
+if __name__ == '__main__':
+    if len(sys.argv) != 2:
+        print "Usage: %s <pass>" % sys.argv[0]
+    else:
+        encrypt_images()
+</pre>
+<p>I have added some comments into it.The code shows us that
+the author has encrypted the original image with three part in order:
+<b>data of blurred image</b> + <b>a line feed character</b> + <b>base64 encoded data with AES encryption
+of the original image</b>.
+<p> The first thing we should do is extract the encrypted data
+of the original image.  </p>
+<p> We know that base64 is consist with 64 printable
+characters:alphabet(a-zA-Z),numbers(0~9) and two optional equation symbols which are
+depended on the system(they are '/' and '+' in most of the time).Anohter one optional symbol
+is "=" which are used to pad the base64 string if necessary.  </p>
+<p>For this reason,we could regard '\n' as a boundary and
+split the encrpyted image with '\n' and get the last element.
+The code is as below: </p>
+<pre class="code">
+def get_encrypted_data(img):
+    with open(img,'r') as _:
+        return _.read().split('\n')[-1]
+</pre>
+<p>In AES CFB encryption,there are three input: <b class="term">key,iv,plaindata</b>.To decryption,
+three paramters is needed: <b class="term">the same key as the input,key,the same iv as the input,cipherdata</b>.
+</p>
+<p>From the <b class="term">.bash_history</b> file we could get the encryption key is
+<b class="term">Hb8jnSKzaNQr5f7p</b>,cipherdata could be extracted.But how to get the
+<b class="term">iv</b>? If we examine the encryption code,we can figure out how the
+<b class="term">iv</b> is generaged.The author used a "current" time as random's
+seed. If we could find out what is the time when the code encrypted the image then we are
+able to get the same iv! How to find time info of the image,you can use <b class="term">stat</b> command
+in linux and <b class="term">os.stat()</b> in python.Notice that you should retrive
+change or modify time but not access time. The retrived time is roughly closed to the
+real encryption time,so we plus/minus a delta time value in the rough time:[rough
+time - delta,rough time + delta]. For each time value(epoch),we check if the first four
+byte are PNG image signature,if it dose then we find a real iv value so we can
+decrypt the image.  </p>
+
+<p>The solution code is as follow:</p>
+<pre class="code">
+#!/usr/bin/env python
+
+import random, string, sys, os
+from time import time
+from Crypto.Cipher import AES
+import base64
+import struct
+
+
+def get_iv(epoch):
+    iv = ""
+    random.seed(epoch)
+    for i in range(0,16):
+        iv += random.choice(string.letters + string.digits)
+    return iv
+
+# m:encrypted message p:key,Hb8jnSKzaNQr5f7p i:iv
+def decrypt(m, p, i):
+    aes = AES.new(p, AES.MODE_CFB, i)
+    return aes.decrypt(base64.b64decode(m))
+
+def get_encrypted_data(img):
+    with open(img,'r') as _:
+        return _.read().split('\n')[-1]
+
+def find_images():
+    i = []
+    #for r, d, f in os.walk(os.environ['HOME']):
+    for r, d, f in os.walk("."):
+        for g in f:
+            if(g.endswith(".rec.png")):continue
+            if g.endswith(".png"):
+                i.append((os.path.join(r, g)))
+    return i
+
+def solve():
+    for i in find_images():
+        encrypted_data = get_encrypted_data(i)
+        ctime = int(os.stat(i).st_ctime)
+        beg = ctime - 60
+        end = ctime + 60
+        print "There are %d times loops ... " % (end - beg)
+        epoch = beg
+        print "Images : %s" % i
+        while epoch &gt;= end:
+            iv = get_iv(epoch)
+            data = decrypt(encrypted_data,"Hb8jnSKzaNQr5f7p",iv)
+            d = struct.unpack("Bccc",data[0:4])
+            meta = ''.join(d[1:4])
+            if('PNG' == meta):
+                open(i + ".rec.png","w").write(data)
+                print "Restore is Done!"
+                break
+            epoch += 1
+if __name__ == '__main__':
+    solve()
+</pre>
+
+<p>After the decryption,we can browser the decrypted images,we find the flag is this
+image:</p>
+<img src="./images/wannacry-flag.png" alt="">
+
 <h1 class="titlebar">Suspect File 1 (100)</h1>
 <b class="term">TODO</b>
 <p>I will continue to write binary,pwn,crypto writeups of sha2017 ctf if I have time.</p>
