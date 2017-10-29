@@ -221,12 +221,12 @@ print()
 
 <h1 class="titlebar">Forenisics/WannaFly</h1>
 <p class="term">Posted on 2017-10-29 </p>
-<p>So,this ia forenisic challenge,firstly let's uncompress the .tgz file:</p>
+<p>So,this is a forenisic challenge,firstly let's uncompress the .tgz file:</p>
 <pre class="code">
 root@kali:~# tar zxvf wannafly.tgz
 kimberly.img
 </pre>
-<p>and look what exactly it <b class="term">kimberly.img</b>:</p>
+<p>and look what exactly <b class="term">kimberly.img</b> is:</p>
 <pre class="code">
 root@kali:~# file kimberly.img
 kimberly.img: Linux rev 1.0 ext4 filesystem data, UUID=56e89f54-c4da-4c5e-a3c6-67398d341788 (extents) (large files) (huge files)
@@ -322,9 +322,8 @@ if __name__ == '__main__':
 the author has encrypted the original image with three part in order:
 <b>data of blurred image</b> + <b>a line feed character</b> + <b>base64 encoded data with AES encryption
 of the original image</b>.
-<p> The first thing we should do is extract the encrypted data
-of the original image.  </p>
-<p> We know that base64 is consist with 64 printable
+<p> The first thing we should do is to extract the encrypted data of the original image.  </p>
+<p> We know that base64 is consist of 64 printable
 characters:alphabet(a-zA-Z),numbers(0~9) and two optional equation symbols which are
 depended on the system(they are '/' and '+' in most of the time).Anohter one optional symbol
 is "=" which are used to pad the base64 string if necessary.  </p>
@@ -347,9 +346,10 @@ seed. If we could find out what is the time when the code encrypted the image th
 able to get the same iv! How to find time info of the image,you can use <b class="term">stat</b> command
 in linux and <b class="term">os.stat()</b> in python.Notice that you should retrive
 change or modify time but not access time. The retrived time is roughly closed to the
-real encryption time,so we plus/minus a delta time value in the rough time:[rough
-time - delta,rough time + delta]. For each time value(epoch),we check if the first four
-byte are PNG image signature,if it dose then we find a real iv value so we can
+real encryption time,so we plus/minus a delta time value in the rough time to produce
+an interval including the real time:[rough time - delta,rough time + delta].
+For each time value(epoch),we check if the first four
+bytes are PNG image signature,if it dose then we find a real iv value so we can
 decrypt the image.  </p>
 
 <p>The solution code is as follow:</p>
